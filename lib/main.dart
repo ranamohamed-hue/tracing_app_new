@@ -97,6 +97,7 @@ class AuthWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
+        // التعامل مع الرسائل فقط
         if (state is SignUpVerificationSentState) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -118,18 +119,24 @@ class AuthWrapper extends StatelessWidget {
       },
       child: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, state) {
+          // لو بيتم التحقق من المصادقة
           if (state is AuthCheckingState) {
             return const SplashScreen();
           }
 
+          // لو تم المصادقة بنجاح
           if (state is AuthenticatedState) {
-            if (state.userModel.userType == 'طالب') {
+            final type = state.userModel.userType?.trim();
+            if (type == 'طالب') {
               return const StudentPage();
-            } else {
+            } else if (type == 'ولي أمر') {
               return const ParentPage();
+            } else {
+              return const SignInPage(); // fallback لأي قيمة غير متوقعة
             }
           }
 
+          // لو المستخدم غير مصادق عليه
           return const SignInPage();
         },
       ),
