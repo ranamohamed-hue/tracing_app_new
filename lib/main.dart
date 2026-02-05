@@ -5,6 +5,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:tracing_app_new/feature/auth/cubit/call_cubitt/call_cubit.dart';
+import 'package:tracing_app_new/feature/auth/cubit/call_cubitt/call_state.dart';
+import 'package:tracing_app_new/feature/auth/data/repo/call_repo_impl.dart';
 import 'package:tracing_app_new/feature/parent/logic/chat_cubit.dart';
 import 'firebase_options.dart';
 
@@ -47,15 +50,30 @@ void main() async {
       child: MultiBlocProvider(
         providers: [
           // --- الكيوبتات الأساسية ---
-          BlocProvider<AuthCubit>(create: (context) => AuthCubit(context.read<AuthRepo>())),
+          BlocProvider<AuthCubit>(
+            create: (context) => AuthCubit(context.read<AuthRepo>()),
+          ),
           BlocProvider<ThemeCubit>(create: (context) => ThemeCubit()),
           BlocProvider<ChatCubit>(create: (context) => ChatCubit()),
 
           // --- الكيوبتات الأخرى ---
-          BlocProvider<ChildrenCubit>(create: (context) => ChildrenCubit(context.read<AuthRepo>())),
-          BlocProvider<LocationCubit>(create: (context) => LocationCubit(context.read<AuthRepo>())),
-          BlocProvider<ParentCubit>(create: (context) => ParentCubit(context.read<AuthRepo>())),
-          BlocProvider<ChildTrackingCubit>(create: (context) => ChildTrackingCubit(context.read<AuthRepo>())),
+          BlocProvider<ChildrenCubit>(
+            create: (context) => ChildrenCubit(context.read<AuthRepo>()),
+          ),
+          BlocProvider<LocationCubit>(
+            create: (context) => LocationCubit(context.read<AuthRepo>()),
+          ),
+          BlocProvider<ParentCubit>(
+            create: (context) => ParentCubit(context.read<AuthRepo>()),
+          ),
+          BlocProvider<ChildTrackingCubit>(
+            create: (context) => ChildTrackingCubit(context.read<AuthRepo>()),
+          ),
+          BlocProvider<CallCubit>(
+            create: (context) => CallCubit(
+              CallRepoImpl(),
+            ), // هنا بنبعت الـ Implementation بتاع الـ Repo
+          ),
         ],
         child: const MyApp(),
       ),
@@ -131,16 +149,15 @@ class AuthWrapper extends StatelessWidget {
 
             if (type.contains('طالب')) {
               return const StudentPage();
-            } 
+            }
             // استخدام contains('ولي') يضمن الدخول سواء كُتبت "ولي أمر" أو "ولي امر" أو حتى "ولي ار"
             else if (type.contains('ولي')) {
               return const ParentPage();
-            } 
-            else {
+            } else {
               // لو القيمة فارغة أو مختلفة تماماً
               print('Unknown User Type: $type');
               return const SignInPage();
-  }
+            }
           }
 
           // لو المستخدم غير مصادق عليه

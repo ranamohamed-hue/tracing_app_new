@@ -49,6 +49,10 @@ dependencies:
   url_launcher: ^6.3.2
   dartz: ^0.10.1
   equatable: ^2.0.8
+  jitsi_meet_flutter_sdk: ^11.6.0
+  firebase_messaging: ^16.1.1
+  flutter_local_notifications: ^20.0.0
+  http: ^1.6.0
 flutter_native_splash:
   color: "#ffffff"
   android: true
