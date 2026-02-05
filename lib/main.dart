@@ -126,14 +126,21 @@ class AuthWrapper extends StatelessWidget {
 
           // لو تم المصادقة بنجاح
           if (state is AuthenticatedState) {
-            final type = state.userModel.userType?.trim();
-            if (type == 'طالب') {
+            // تنظيف النص من المسافات الزائدة
+            final type = state.userModel.userType?.trim() ?? "";
+
+            if (type.contains('طالب')) {
               return const StudentPage();
-            } else if (type == 'ولي أمر') {
+            } 
+            // استخدام contains('ولي') يضمن الدخول سواء كُتبت "ولي أمر" أو "ولي امر" أو حتى "ولي ار"
+            else if (type.contains('ولي')) {
               return const ParentPage();
-            } else {
-              return const SignInPage(); // fallback لأي قيمة غير متوقعة
-            }
+            } 
+            else {
+              // لو القيمة فارغة أو مختلفة تماماً
+              print('Unknown User Type: $type');
+              return const SignInPage();
+  }
           }
 
           // لو المستخدم غير مصادق عليه

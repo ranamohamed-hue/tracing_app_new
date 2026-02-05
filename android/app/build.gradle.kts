@@ -16,8 +16,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+   kotlin {
+        compilerOptions {
+            // تعيين الهدف إلى 17 ليتوافق مع باقي إعدادات المشروع
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
     }
 
     defaultConfig {

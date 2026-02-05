@@ -49,6 +49,7 @@ class _SignInPageState extends State<SignInPage> {
           statusBarIconBrightness: Brightness.light,
         ),
         child: Scaffold(
+            resizeToAvoidBottomInset: true, // الافتراضي true
           appBar: AppbarPart(title: "تسجيل الدخول"),
           body: Container(
             constraints: const BoxConstraints.expand(),

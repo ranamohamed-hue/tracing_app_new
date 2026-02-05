@@ -5,17 +5,12 @@ import 'package:tracing_app_new/core/widgets/appbar_part.dart';
 import 'package:tracing_app_new/core/widgets/elevated_button_widget.dart';
 import 'package:tracing_app_new/feature/auth/cubit/auth_cubit.dart';
 import 'package:tracing_app_new/feature/auth/cubit/auth_state.dart';
-// استيراد الكيوبتات
 import 'package:tracing_app_new/feature/auth/cubit/parent_cubit.dart';
 import 'package:tracing_app_new/feature/auth/cubit/location_cubit.dart';
 import 'package:tracing_app_new/feature/parent/logic/chat_cubit.dart';
 import 'package:tracing_app_new/feature/parent/logic/chat_state.dart';
-// *** التعديل 1: إضافة استيراد ملفات الحالات الصحيحة ***
 import 'package:tracing_app_new/feature/auth/cubit/parent_state.dart';
 import 'package:tracing_app_new/feature/auth/cubit/location_state.dart';
-
-import 'package:tracing_app_new/feature/parent/screens/video_call_page.dart';
-import 'package:tracing_app_new/feature/parent/screens/voice_call_page.dart';
 import 'package:tracing_app_new/feature/student/screens/invite_code_page.dart';
 
 class StudentPage extends StatelessWidget {
@@ -27,8 +22,7 @@ class StudentPage extends StatelessWidget {
     final username = (authState is AuthenticatedState) ? authState.userModel.username : 'طالب';
 
     return Scaffold(
-      appBar: AppbarPart(title: "راصد "),
-      // *** التعديل 2: تصحيح نوع الحالة في BlocListener ***
+      appBar: const AppbarPart(title: "راصد "),
       body: BlocListener<ParentCubit, ParentState>(
         listener: (context, state) {
           if (state is InviteCodeErrorState) {
@@ -73,7 +67,6 @@ class StudentPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 50),
 
-                // *** التعديل 3: تصحيح نوع الحالة في BlocBuilder ***
                 BlocBuilder<LocationCubit, LocationState>(
                   builder: (context, locationState) {
                     final isTracking = locationState is TrackingStartedState;
@@ -100,21 +93,26 @@ class StudentPage extends StatelessWidget {
                   icon: Icons.qr_code_2,
                 ),
                 const SizedBox(height: 30),
+
+                // *** إضافة أزرار المكالمات المعطلة ***
                 Row(
                   children: [
                     ElevatedButtonWidget(
-                      onpress: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const VideoCallPage())),
+                      // *** التعديل: تعطيل الزر بجعل onpress يساوي null ***
+                      onpress: null,
                       title: "مكالمة فيديو",
                       icon: Icons.video_call_outlined,
                     ),
                     const Spacer(),
                     ElevatedButtonWidget(
-                      onpress: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const VoiceCallPage())),
+                      // *** التعديل: تعطيل الزر بجعل onpress يساوي null ***
+                      onpress: null,
                       title: "مكالمة صوتية",
                       icon: Icons.phone_callback,
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 60),
                 BlocBuilder<ChatCubit, ChatState>(
                   builder: (context, state) {
