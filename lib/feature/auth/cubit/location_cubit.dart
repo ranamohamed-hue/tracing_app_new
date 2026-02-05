@@ -8,23 +8,28 @@ import 'package:tracing_app_new/feature/auth/cubit/location_state.dart';
 
 class LocationCubit extends Cubit<LocationState> {
   final AuthRepo _authRepo;
-  Timer? _locationTimer;
+  StreamSubscription<Position>? _positionStreamSubscription; // استخدام الـ Stream بدلاً من الـ Timer
   bool _isTrackingActive = false;
 
   LocationCubit(this._authRepo) : super(LocationInitial());
 
   @override
   Future<void> close() {
-    _locationTimer?.cancel();
+    _positionStreamSubscription?.cancel();
     return super.close();
   }
 
-  Future<void> updateMyLocation(String userUid) async {
+  // هذه الدالة أصبحت الآن تطلب الإذن وتبدأ البث
+  void _startLocationTracking(String userUid) async {
+    if (_isTrackingActive) return;
+
+    // 1. التأكد من الخدمات والإذونات
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      emit(const LocationErrorState('خدمات الموقع معطلة. يرجى تفعيلها.'));
+      emit(const LocationErrorState('خدمات الموقع معطلة.'));
       return;
     }
+
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -33,33 +38,38 @@ class LocationCubit extends Cubit<LocationState> {
         return;
       }
     }
-    
-    final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-    final geoPoint = GeoPoint(position.latitude, position.longitude);
-    
-    final result = await _authRepo.updateUserLocation(userUid, geoPoint);
-    result.fold(
-      (error) => emit(LocationErrorState(error)),
-      (_) => emit(LocationUpdatedState(geoPoint)),
-    );
-  }
 
-  void _startLocationTracking(String userUid) {
-    if (_isTrackingActive) return;
     _isTrackingActive = true;
     emit(TrackingStartedState());
-    updateMyLocation(userUid);
-    _locationTimer = Timer.periodic(const Duration(seconds: 30), (timer) => updateMyLocation(userUid));
+
+    // 2. إعدادات البث (يرسل تحديث كلما تحرك المستخدم لمسافة 5 أمتار مثلاً)
+    const LocationSettings locationSettings = LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 5, // تحديث كل 5 أمتار حركة
+    );
+
+    // 3. بدء الاستماع للموقع وإرساله فوراً لـ Firebase
+    _positionStreamSubscription = Geolocator.getPositionStream(locationSettings: locationSettings)
+        .listen((Position position) async {
+      final geoPoint = GeoPoint(position.latitude, position.longitude);
+      
+      // تحديث Firebase في الخلفية
+      await _authRepo.updateUserLocation(userUid, geoPoint);
+      
+      // تحديث الحالة لولي الأمر
+      if (!isClosed) emit(LocationUpdatedState(geoPoint));
+    });
   }
 
   void _stopLocationTracking() {
-    _locationTimer?.cancel();
-    _locationTimer = null;
+    _positionStreamSubscription?.cancel();
+    _positionStreamSubscription = null;
     _isTrackingActive = false;
     emit(TrackingStoppedState());
   }
 
   void toggleTracking(String userUid) {
+    print("تم الضغط على الزرار لـ UID: $userUid"); // ضيف ده
     if (_isTrackingActive) {
       _stopLocationTracking();
     } else {

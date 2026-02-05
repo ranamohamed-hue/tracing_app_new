@@ -13,134 +13,148 @@ import 'package:tracing_app_new/feature/auth/cubit/parent_state.dart';
 import 'package:tracing_app_new/feature/auth/cubit/location_state.dart';
 import 'package:tracing_app_new/feature/student/screens/invite_code_page.dart';
 
-class StudentPage extends StatelessWidget {
+class StudentPage extends StatefulWidget {
   const StudentPage({super.key});
+
+  @override
+  State<StudentPage> createState() => _StudentPageState();
+}
+
+class _StudentPageState extends State<StudentPage> {
+  
+  @override
+  void initState() {
+    super.initState();
+    // استدعاء تفعيل الموقع تلقائياً فور فتح الصفحة
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _activateLocationAutomatically();
+    });
+  }
+
+  void _activateLocationAutomatically() {
+    final authState = context.read<AuthCubit>().state;
+    if (authState is AuthenticatedState) {
+      final locationCubit = context.read<LocationCubit>();
+      
+      // لا نشغل التتبع إلا إذا كان متوقفاً (لتجنب التكرار عند عمل Rebuild)
+      if (locationCubit.state is! TrackingStartedState && 
+          locationCubit.state is! LocationUpdatedState) {
+        locationCubit.toggleTracking(authState.userModel.uid);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final authState = context.watch<AuthCubit>().state;
     final username = (authState is AuthenticatedState) ? authState.userModel.username : 'طالب';
+    final userUid = (authState is AuthenticatedState) ? authState.userModel.uid : '';
 
     return Scaffold(
-      appBar: const AppbarPart(title: "راصد "),
-      body: BlocListener<ParentCubit, ParentState>(
-        listener: (context, state) {
-          if (state is InviteCodeErrorState) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('فشل إنشاء الكود: ${state.error}'),
-                backgroundColor: Colors.red,
-                action: SnackBarAction(
-                  label: 'إغلاق',
-                  textColor: Colors.white,
-                  onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
-                ),
-              ),
-            );
-          }
-          if (state is InviteCodeGeneratedState) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('تم إنشاء كود الدعوة بنجاح!'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          }
-        },
+      appBar: const AppbarPart(title: "لوحة الطالب"),
+      body: MultiBlocListener(
+        listeners: [
+          BlocListener<LocationCubit, LocationState>(
+            listener: (context, state) {
+              if (state is LocationErrorState) {
+                _showSnackBar(context, state.error, Colors.orange.shade800);
+              }
+              if (state is TrackingStartedState) {
+                _showSnackBar(context, 'تم تفعيل تتبع الموقع تلقائياً', Colors.green);
+              }
+            },
+          ),
+          BlocListener<ParentCubit, ParentState>(
+            listener: (context, state) {
+              if (state is InviteCodeErrorState) {
+                _showSnackBar(context, 'فشل إنشاء الكود: ${state.error}', Colors.red);
+              }
+              if (state is InviteCodeGeneratedState) {
+                _showSnackBar(context, 'تم إنشاء كود الدعوة بنجاح!', Colors.green);
+              }
+            },
+          ),
+        ],
         child: Container(
           constraints: const BoxConstraints.expand(),
           decoration: AppStyles.primaryGradientDecoration,
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(15.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "مرحبا : $username",
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: Colors.white,
-                  ),
-                  textAlign: TextAlign.right,
+                  "مرحباً بك : $username",
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white),
                 ),
-                const SizedBox(height: 50),
+                const SizedBox(height: 40),
 
+                // زر التحكم اليدوي (للطوارئ)
                 BlocBuilder<LocationCubit, LocationState>(
                   builder: (context, locationState) {
-                    final isTracking = locationState is TrackingStartedState;
+                    final bool isTracking = locationState is TrackingStartedState || locationState is LocationUpdatedState;
                     return ElevatedButtonWidget(
-                      onpress: () {
-                        if (authState is AuthenticatedState) {
-                          context.read<LocationCubit>().toggleTracking(authState.userModel.uid);
-                        }
-                      },
-                      title: isTracking ? "إيقاف التتبع" : "تفعيل الموقع الجغرافي",
-                      icon: isTracking ? Icons.location_off : Icons.location_on_outlined,
+                      onpress: () => context.read<LocationCubit>().toggleTracking(userUid),
+                      title: isTracking ? "إيقاف تتبع موقعي" : "تفعيل التتبع المباشر",
+                      icon: isTracking ? Icons.location_off : Icons.location_on,
                     );
                   },
                 ),
-                const SizedBox(height: 30),
+                
+                const SizedBox(height: 20),
+
                 ElevatedButtonWidget(
-                  onpress: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const InviteCodePage()),
-                    );
-                  },
-                  title: "كود الدعوة لولي الأمر",
-                  icon: Icons.qr_code_2,
-                ),
-                const SizedBox(height: 30),
-
-                // *** إضافة أزرار المكالمات المعطلة ***
-                Row(
-                  children: [
-                    ElevatedButtonWidget(
-                      // *** التعديل: تعطيل الزر بجعل onpress يساوي null ***
-                      onpress: null,
-                      title: "مكالمة فيديو",
-                      icon: Icons.video_call_outlined,
-                    ),
-                    const Spacer(),
-                    ElevatedButtonWidget(
-                      // *** التعديل: تعطيل الزر بجعل onpress يساوي null ***
-                      onpress: null,
-                      title: "مكالمة صوتية",
-                      icon: Icons.phone_callback,
-                    ),
-                  ],
+                  onpress: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const InviteCodePage())),
+                  title: "عرض كود ربط ولي الأمر",
+                  icon: Icons.qr_code_scanner,
                 ),
 
-                const SizedBox(height: 60),
-                BlocBuilder<ChatCubit, ChatState>(
-                  builder: (context, state) {
-                    return SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue.shade700,
-                          foregroundColor: Colors.white,
-                        ),
-                        onPressed: () => context.read<ChatCubit>().launchChatGpt(),
-                        icon: state is ChatLoading
-                            ? const SizedBox(
-                                width: 20, height: 20,
-                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                              )
-                            : const Icon(Icons.link_sharp),
-                        label: Text(state is ChatLoading ? 'جاري الفتح...' : 'فتح في Chat GPT'),
-                      ),
-                    );
-                  },
-                ),
+                const SizedBox(height: 20),
+
+                _buildCallOptions(),
+
+                const SizedBox(height: 40),
+
+                _buildAiButton(),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildCallOptions() {
+    return Row(
+      children: [
+        Expanded(child: ElevatedButtonWidget(onpress: null, title: "فيديو", icon: Icons.video_call)),
+        const SizedBox(width: 10),
+        Expanded(child: ElevatedButtonWidget(onpress: null, title: "صوتية", icon: Icons.phone)),
+      ],
+    );
+  }
+
+  Widget _buildAiButton() {
+    return BlocBuilder<ChatCubit, ChatState>(
+      builder: (context, state) {
+        return SizedBox(
+          width: double.infinity, height: 55,
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white.withOpacity(0.9),
+              foregroundColor: Colors.blue.shade900,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () => context.read<ChatCubit>().launchChatGpt(),
+            icon: state is ChatLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.auto_awesome),
+            label: Text(state is ChatLoading ? 'جاري الاتصال...' : 'اسأل ذكاء راصد (ChatGPT)', style: const TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showSnackBar(BuildContext context, String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: color));
   }
 }

@@ -249,16 +249,23 @@ class AuthRepoImpl implements AuthRepo {
     }
   }
 
-  @override
-  Stream<GeoPoint> getChildLocationStream(String childUid) {
-    return _firebaseFirestore
-        .collection('users')
-        .doc(childUid)
-        .collection('location')
-        .doc('currentLocation')
-        .snapshots()
-        .map((snapshot)=>snapshot.data()?['location'] as GeoPoint);
-  }
+ @override
+Stream<GeoPoint> getChildLocationStream(String childUid) {
+  return _firebaseFirestore
+      .collection('users')
+      .doc(childUid)
+      .collection('location')
+      .doc('currentLocation')
+      .snapshots()
+      .map((snapshot) {
+        if (snapshot.exists && snapshot.data() != null) {
+          // تأكد من اسم الحقل داخل الفايربيز
+          return snapshot.data()!['location'] as GeoPoint;
+        }
+        // إرجاع قيمة افتراضية لتجنب خطأ الـ Null check operator
+        return const GeoPoint(0, 0); 
+      });
+}
 
   // --- دوال مساعدة (لم تتغير) ---
   String _generateRandomCode() {

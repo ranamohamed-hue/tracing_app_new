@@ -30,7 +30,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       // *** تعديل العنوان ليعكس أنه الصفحة الرئيسية ***
-      appBar: const AppbarPart(title: "راصد"),
+      appBar: const AppbarPart(title: "لوحة التحكم"),
       body: Container(
         // *** إكمال خصائص الـ Container ***
         constraints: const BoxConstraints.expand(),
@@ -40,7 +40,7 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(child: Text("لوحة التحكم")),
+             
               SizedBox(height: 20),
               // 1. BlocBuilder لـ AuthCubit لجلب اسم ولي الأمر
               BlocBuilder<AuthCubit, AuthState>(
