@@ -5,75 +5,66 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:tracing_app_new/feature/auth/cubit/call_cubitt/call_cubit.dart';
-import 'package:tracing_app_new/feature/auth/cubit/call_cubitt/call_state.dart';
-import 'package:tracing_app_new/feature/auth/data/repo/call_repo_impl.dart';
-import 'package:tracing_app_new/feature/parent/logic/chat_cubit.dart';
 import 'firebase_options.dart';
 
-// استيراد ملفات المصادقة
+// استيراد مكتبة Jitsi
+import 'package:jitsi_meet_flutter_sdk/jitsi_meet_flutter_sdk.dart';
+
+// استيراد الـ Cubits والـ Repos
 import 'package:tracing_app_new/feature/auth/cubit/auth_cubit.dart';
 import 'package:tracing_app_new/feature/auth/cubit/auth_state.dart';
 import 'package:tracing_app_new/feature/auth/data/repo/auth_repo.dart';
 import 'package:tracing_app_new/feature/auth/data/repo/auth_repo_impl.dart';
-
-// استيراد الكيوبتات الأخرى
+import 'package:tracing_app_new/feature/auth/cubit/call_cubitt/call_cubit.dart';
+import 'package:tracing_app_new/feature/auth/data/repo/call_repo_impl.dart';
+import 'package:tracing_app_new/feature/parent/logic/chat_cubit.dart';
 import 'package:tracing_app_new/feature/auth/cubit/children_cubit.dart';
 import 'package:tracing_app_new/feature/auth/cubit/location_cubit.dart';
 import 'package:tracing_app_new/feature/auth/cubit/parent_cubit.dart';
 import 'package:tracing_app_new/feature/auth/cubit/child_tracing_cubit.dart';
 
-// استيراد ملفات الثيم
+// استيراد الثيم والشاشات
 import 'package:tracing_app_new/core/theming/app_theme.dart';
 import 'package:tracing_app_new/core/theming/logic/theme_cubit.dart';
 import 'package:tracing_app_new/core/theming/logic/theme_state.dart';
-
-// استيراد الشاشات
 import 'package:tracing_app_new/feature/login/screens/splash_screen.dart';
 import 'package:tracing_app_new/feature/login/screens/sign_in_page.dart';
 import 'package:tracing_app_new/feature/parent/screens/parent_page.dart';
 import 'package:tracing_app_new/feature/student/screens/student_page.dart';
+import 'package:tracing_app_new/feature/auth/cubit/call_cubitt/incoming_call_overlay.dart'; 
+import 'package:tracing_app_new/core/services/notification_service.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+  await NotificationService.initialize();
 
   final authRepo = AuthRepoImpl(
     firebaseAuth: FirebaseAuth.instance,
     firebaseFirestore: FirebaseFirestore.instance,
   );
+  final callRepo = CallRepoImpl();
 
   runApp(
-    RepositoryProvider<AuthRepo>.value(
-      value: authRepo,
+    MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<AuthRepo>.value(value: authRepo),
+        RepositoryProvider<CallRepoImpl>.value(value: callRepo),
+      ],
       child: MultiBlocProvider(
         providers: [
-          // --- الكيوبتات الأساسية ---
-          BlocProvider<AuthCubit>(
-            create: (context) => AuthCubit(context.read<AuthRepo>()),
-          ),
+          BlocProvider<AuthCubit>(create: (context) => AuthCubit(context.read<AuthRepo>())),
           BlocProvider<ThemeCubit>(create: (context) => ThemeCubit()),
           BlocProvider<ChatCubit>(create: (context) => ChatCubit()),
-
-          // --- الكيوبتات الأخرى ---
-          BlocProvider<ChildrenCubit>(
-            create: (context) => ChildrenCubit(context.read<AuthRepo>()),
-          ),
-          BlocProvider<LocationCubit>(
-            create: (context) => LocationCubit(context.read<AuthRepo>()),
-          ),
-          BlocProvider<ParentCubit>(
-            create: (context) => ParentCubit(context.read<AuthRepo>()),
-          ),
-          BlocProvider<ChildTrackingCubit>(
-            create: (context) => ChildTrackingCubit(context.read<AuthRepo>()),
-          ),
-          BlocProvider<CallCubit>(
-            create: (context) => CallCubit(
-              CallRepoImpl(),
-            ), // هنا بنبعت الـ Implementation بتاع الـ Repo
-          ),
+          BlocProvider<ChildrenCubit>(create: (context) => ChildrenCubit(context.read<AuthRepo>())),
+          BlocProvider<LocationCubit>(create: (context) => LocationCubit(context.read<AuthRepo>())),
+          BlocProvider<ParentCubit>(create: (context) => ParentCubit(context.read<AuthRepo>())),
+          BlocProvider<ChildTrackingCubit>(create: (context) => ChildTrackingCubit(context.read<AuthRepo>())),
+          BlocProvider<CallCubit>(create: (context) => CallCubit(context.read<CallRepoImpl>())),
         ],
         child: const MyApp(),
       ),
@@ -90,6 +81,7 @@ class MyApp extends StatelessWidget {
       builder: (context, themeState) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
+          navigatorKey: navigatorKey,
           title: 'Tracing App',
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
@@ -102,6 +94,55 @@ class MyApp extends StatelessWidget {
           darkTheme: AppTheme.darkTheme,
           themeMode: themeState.themeMode,
           home: const AuthWrapper(),
+          routes: {
+            '/parentHome': (context) => const ParentPage(),
+            '/studentHome': (context) => const StudentPage(),
+            '/callScreen': (context) {
+              final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+              return IncomingCallOverlay(
+                callerName: args['callerName'] ?? 'متصل مجهول',
+                isVideo: true,
+                onAccept: () async {
+                  try {
+                    // إغلاق الأوفرلاي قبل الدخول
+                    Navigator.of(context, rootNavigator: true).pop();
+
+                    // ✅ استخدام اسم الغرفة الممرر من الـ Cubit لضمان التطابق التام
+                    String roomName = args['roomName'];
+
+                    var options = JitsiMeetConferenceOptions(
+                      serverURL: "https://meet.jit.si",
+                      room: roomName,
+                      configOverrides: {
+                        "prejoinPageEnabled": false,
+                        "lobbyModeEnabled": false,
+                        "disableDeepLinking": true, // يمنع التحويل للمتصفح أو المتجر
+                        "startWithAudioMuted": false,
+                        "startWithVideoMuted": false,
+                      },
+                      featureFlags: {
+                        "welcomePage.enabled": false,
+                        "prejoinPageEnabled": false,
+                        "unsafeRoomWarning.enabled": false, // تخطي صفحة الأمان التي تعطل الـ SDK
+                        "resolution": 360,
+                        "pip.enabled": true,
+                        "isWebviewEnabled": true, // تفعيل الـ WebView الداخلي كبديل آمن
+                        "conference.enabled": true,
+                      },
+                    );
+
+                    var jitsiMeet = JitsiMeet();
+                    await jitsiMeet.join(options);
+                  } catch (e) {
+                    debugPrint("Jitsi Join Error: $e");
+                  }
+                },
+                onDecline: () {
+                  Navigator.pop(context);
+                },
+              );
+            },
+          },
         );
       },
     );
@@ -115,21 +156,13 @@ class AuthWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
-        // التعامل مع الرسائل فقط
         if (state is SignUpVerificationSentState) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 5),
-            ),
+            SnackBar(content: Text(state.message), backgroundColor: Colors.green),
           );
         }
         if (state is SignUpErrorState || state is LogoutErrorState) {
-          String errorMessage = '';
-          if (state is SignUpErrorState) errorMessage = state.error;
-          if (state is LogoutErrorState) errorMessage = state.error;
-
+          String errorMessage = (state is SignUpErrorState) ? state.error : "خطأ غير معروف";
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
           );
@@ -137,30 +170,21 @@ class AuthWrapper extends StatelessWidget {
       },
       child: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, state) {
-          // لو بيتم التحقق من المصادقة
-          if (state is AuthCheckingState) {
-            return const SplashScreen();
-          }
+          if (state is AuthCheckingState) return const SplashScreen();
 
-          // لو تم المصادقة بنجاح
           if (state is AuthenticatedState) {
-            // تنظيف النص من المسافات الزائدة
-            final type = state.userModel.userType?.trim() ?? "";
+            NotificationService.listenForIncomingCalls(
+              context,
+              state.userModel.uid,
+            );
 
-            if (type.contains('طالب')) {
+            final String type = state.userModel.userType?.trim().toLowerCase() ?? "";
+            if (type.contains('طالب') || type.contains('student')) {
               return const StudentPage();
-            }
-            // استخدام contains('ولي') يضمن الدخول سواء كُتبت "ولي أمر" أو "ولي امر" أو حتى "ولي ار"
-            else if (type.contains('ولي')) {
-              return const ParentPage();
             } else {
-              // لو القيمة فارغة أو مختلفة تماماً
-              print('Unknown User Type: $type');
-              return const SignInPage();
+              return const ParentPage();
             }
           }
-
-          // لو المستخدم غير مصادق عليه
           return const SignInPage();
         },
       ),

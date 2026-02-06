@@ -1,22 +1,30 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:latlong2/latlong.dart';
+
+// الأساسيات
 import 'package:tracing_app_new/core/widgets/appbar_part.dart';
 import 'package:tracing_app_new/feature/auth/data/models/user_model.dart';
 import 'package:tracing_app_new/feature/auth/data/repo/auth_repo.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tracing_app_new/feature/auth/data/repo/call_repo.dart';
-import 'package:tracing_app_new/feature/parent/widgets/action_button.dart';
-import 'package:tracing_app_new/feature/parent/widgets/child_map_widget.dart';
+
+// --- تعديل الـ Call Repo لمنع التضارب ---
+// تأكدي أن هذا السطر هو الوحيد المستورد من ملف الـ Repo
+import 'package:tracing_app_new/feature/auth/data/repo/call_repo.dart' hide MeetingStatus;
+
+// الـ Cubits والـ States
 import 'package:tracing_app_new/feature/auth/cubit/child_tracing_cubit.dart';
-// --- الإضافات الجديدة للربط ---
 import 'package:tracing_app_new/feature/auth/cubit/call_cubitt/call_cubit.dart';
 import 'package:tracing_app_new/feature/auth/cubit/call_cubitt/call_state.dart';
 import 'package:tracing_app_new/feature/auth/cubit/auth_cubit.dart';
 import 'package:tracing_app_new/feature/auth/cubit/auth_state.dart';
-// -------------------------
-import 'package:latlong2/latlong.dart';
 
+// الـ Widgets
+import 'package:tracing_app_new/feature/parent/widgets/action_button.dart';
+import 'package:tracing_app_new/feature/parent/widgets/child_map_widget.dart';
+
+// ده الملف اللي فيه التعريف الجديد والمهم بتاعنا
 class ChildTracingPage extends StatefulWidget {
   final UserModel child;
 
@@ -109,6 +117,7 @@ class _ChildTracingPageState extends State<ChildTracingPage> {
                     context.read<CallCubit>().startMeeting(
                       currentUser: authState.userModel,
                       isVideoCall: true,
+                      calleeId: widget.child.uid, // تمرير معرف الطفل
                     );
                   },
                 ),
@@ -121,6 +130,7 @@ class _ChildTracingPageState extends State<ChildTracingPage> {
                     context.read<CallCubit>().startMeeting(
                       currentUser: authState.userModel,
                       isVideoCall: false,
+                      calleeId: widget.child.uid, // تمرير معرف الطفل
                     );
                   },
                 ),

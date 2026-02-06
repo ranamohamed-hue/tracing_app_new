@@ -1,10 +1,17 @@
 import 'package:equatable/equatable.dart';
-import 'package:tracing_app_new/feature/auth/data/repo/call_repo.dart';
+
+// 1. تعريف الـ Enum بكل الحالات المطلوبة
+enum MeetingStatus { 
+  idle,       // الحالة الابتدائية
+  connecting, // جاري الاتصال
+  success,    // نجاح الاتصال
+  error       // حالة الخطأ (هذه هي التي كانت ناقصة وتسبب اللون الأحمر)
+}
 
 class CallState extends Equatable {
   final MeetingStatus status;
   final String? errorMessage;
-  final List<Map<String, String>> participants; // قائمة المشاركين الحاليين
+  final List<Map<String, String>> participants; 
 
   const CallState({
     this.status = MeetingStatus.idle,
@@ -12,7 +19,6 @@ class CallState extends Equatable {
     this.participants = const [],
   });
 
-  // دالة لإنشاء نسخة جديدة من الحالة مع تغيير قيم معينة
   CallState copyWith({
     MeetingStatus? status,
     String? errorMessage,
