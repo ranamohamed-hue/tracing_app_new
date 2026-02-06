@@ -53,6 +53,7 @@ dependencies:
   firebase_messaging: ^16.1.1
   flutter_local_notifications: ^20.0.0
   http: ^1.6.0
+  audioplayers: ^6.5.1
 flutter_native_splash:
   color: "#ffffff"
   android: true
@@ -87,6 +88,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/logoi.png
+    - assets/videosplash.mp4
     - assets/videosplash.mp4
 
   # An image asset can refer to one or more resolution-specific "variants", see

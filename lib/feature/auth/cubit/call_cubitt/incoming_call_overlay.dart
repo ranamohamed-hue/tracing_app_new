@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 class IncomingCallOverlay extends StatelessWidget {
   final String callerName;
+  final String roomName; // ✅ تمت إضافة اسم الغرفة هنا
   final bool isVideo;
   final VoidCallback onAccept;
   final VoidCallback onDecline;
@@ -9,6 +10,7 @@ class IncomingCallOverlay extends StatelessWidget {
   const IncomingCallOverlay({
     super.key,
     required this.callerName,
+    required this.roomName, // ✅ استلام اسم الغرفة في الـ Constructor
     required this.isVideo,
     required this.onAccept,
     required this.onDecline,
@@ -17,7 +19,7 @@ class IncomingCallOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.9), // خلفية شبه شفافة داكنة
+      backgroundColor: Colors.black.withOpacity(0.9),
       body: SafeArea(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -48,6 +50,12 @@ class IncomingCallOverlay extends StatelessWidget {
                   isVideo ? "مكالمة فيديو واردة..." : "مكالمة صوتية واردة...",
                   style: const TextStyle(color: Colors.greenAccent, fontSize: 18),
                 ),
+                // اختياري: إظهار اسم الغرفة للتأكد أثناء البرمجة (يمكنك حذفه لاحقاً)
+                const SizedBox(height: 5),
+                Text(
+                  "Room ID: $roomName",
+                  style: TextStyle(color: Colors.white24, fontSize: 12),
+                ),
               ],
             ),
 
@@ -67,7 +75,7 @@ class IncomingCallOverlay extends StatelessWidget {
                   icon: isVideo ? Icons.videocam : Icons.call,
                   color: Colors.green,
                   label: "رد",
-                  onTap: onAccept,
+                  onTap: onAccept, // سينفذ الكود الموجود في الـ routes في main.dart
                 ),
               ],
             ),

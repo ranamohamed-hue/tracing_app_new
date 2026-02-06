@@ -101,38 +101,44 @@ class MyApp extends StatelessWidget {
               final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
               return IncomingCallOverlay(
                 callerName: args['callerName'] ?? 'متصل مجهول',
+                roomName: args['roomName'], // تمرير اسم الغرفة للأوفرلاي
                 isVideo: true,
                 onAccept: () async {
                   try {
-                    // إغلاق الأوفرلاي قبل الدخول
+                    // إغلاق الشاشة الحالية
                     Navigator.of(context, rootNavigator: true).pop();
 
-                    // ✅ استخدام اسم الغرفة الممرر من الـ Cubit لضمان التطابق التام
-                    String roomName = args['roomName'];
+                    // ✅ إضافة الـ Listener (السر اللي في كود المصدر) لضمان التشغيل Native
+                    var listener = JitsiMeetEventListener(
+                      conferenceJoined: (url) => debugPrint("تم الدخول للمكالمة: $url"),
+                      conferenceTerminated: (url, error) => debugPrint("انتهت المكالمة: $error"),
+                      readyToClose: () => debugPrint("المكالمة جاهزة للإغلاق"),
+                    );
 
                     var options = JitsiMeetConferenceOptions(
-                      serverURL: "https://meet.jit.si",
-                      room: roomName,
+                      serverURL: "https://meet.ffmuc.net",
+                      room: args['roomName'], // اسم الغرفة من الكيوبيت
                       configOverrides: {
                         "prejoinPageEnabled": false,
                         "lobbyModeEnabled": false,
-                        "disableDeepLinking": true, // يمنع التحويل للمتصفح أو المتجر
+                        "disableDeepLinking": true, // أهم سطر لمنع المتصفح
                         "startWithAudioMuted": false,
                         "startWithVideoMuted": false,
                       },
                       featureFlags: {
-                        "welcomePage.enabled": false,
-                        "prejoinPageEnabled": false,
-                        "unsafeRoomWarning.enabled": false, // تخطي صفحة الأمان التي تعطل الـ SDK
-                        "resolution": 360,
-                        "pip.enabled": true,
-                        "isWebviewEnabled": true, // تفعيل الـ WebView الداخلي كبديل آمن
-                        "conference.enabled": true,
+                        FeatureFlags.welcomePageEnabled: false,
+                        FeatureFlags.preJoinPageEnabled: false,
+                        FeatureFlags.unsafeRoomWarningEnabled: false,
+                        FeatureFlags.resolution: FeatureFlagVideoResolutions.resolution360p,
+                        FeatureFlags.pipEnabled: true,
+                        FeatureFlags.callIntegrationEnabled: true,
                       },
                     );
 
                     var jitsiMeet = JitsiMeet();
-                    await jitsiMeet.join(options);
+                    // ✅ استدعاء المكالمة بالـ options والـ listener معاً
+                    await jitsiMeet.join(options, listener);
+                    
                   } catch (e) {
                     debugPrint("Jitsi Join Error: $e");
                   }

@@ -12,7 +12,7 @@ class NotificationService {
       'high_importance_call_channel',
       'Incoming Calls',
       description: 'This channel is used for incoming call notifications.',
-      importance: Importance.max, // رفع الأهمية للقصوى
+      importance: Importance.max,
       playSound: true,
     );
 
@@ -41,22 +41,21 @@ class NotificationService {
       if (snapshot.exists) {
         final data = snapshot.data();
         
-        // التحقق من حالة الرنين
         if (data != null && data['status'] == 'ringing') {
           
-          // استخدام Navigator من خلال الـ context بحذر
           showDialog(
             context: context,
             barrierDismissible: false, 
             builder: (dialogContext) => IncomingCallOverlay(
               callerName: data['callerName'] ?? "متصل غير معروف",
+              roomName: data['roomName'] ?? "", // ✅ تمرير اسم الغرفة للأوفرلاي ليختفي الـ Error
               isVideo: data['isVideo'] ?? true,
               onAccept: () {
-                // 1. استخراج البيانات قبل إغلاق الديالوج
+                // 1. استخراج البيانات
                 final String? roomName = data['roomName'];
                 final String? caller = data['callerName'];
 
-                // 2. إغلاق شاشة التنبيه باستخدام الـ dialogContext
+                // 2. إغلاق الديالوج
                 Navigator.of(dialogContext).pop(); 
                 
                 // 3. تحديث الحالة في Firestore
@@ -64,8 +63,9 @@ class NotificationService {
                   'status': 'accepted',
                 });
 
-                // 4. الانتقال لصفحة Jitsi Meet المبرمجة في Routes بالـ main
+                // 4. الانتقال لصفحة Jitsi Meet المبرمجة في Routes
                 if (roomName != null) {
+                  // ✅ تأكدي أن الأسماء (roomName, callerName) مطابقة لما هو موجود في الـ main.dart
                   Navigator.pushNamed(context, '/callScreen', arguments: {
                     'roomName': roomName,
                     'callerName': caller,
@@ -74,11 +74,7 @@ class NotificationService {
               },
               onDecline: () {
                 Navigator.of(dialogContext).pop(); 
-                
-                // حفظ مكالمة فائتة
                 _saveMissedCallNotification(myUid, data['callerName'] ?? "متصل");
-
-                // حذف السجل لإنهاء الاتصال
                 FirebaseFirestore.instance.collection('calls').doc(myUid).delete();
               },
             ),

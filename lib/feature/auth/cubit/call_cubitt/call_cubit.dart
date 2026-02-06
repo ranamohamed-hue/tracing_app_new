@@ -17,11 +17,13 @@ class CallCubit extends Cubit<CallState> {
   }) async {
     emit(state.copyWith(status: MeetingStatus.connecting));
 
+    // ✅ توحيد منطق اسم الغرفة (ثابت ومستقر)
     String roomName = (currentUser.userType.contains('ولي') || currentUser.userType.contains('parent')) 
         ? "room_${currentUser.uid}" 
         : "room_${currentUser.parentUid}";
 
     try {
+      // 1. تحديث بيانات المكالمة في فايربيس للطرف الآخر
       await FirebaseFirestore.instance.collection('calls').doc(calleeId).set({
         'callerName': currentUser.username,
         'callerId': currentUser.uid,
@@ -32,25 +34,23 @@ class CallCubit extends Cubit<CallState> {
         'timestamp': FieldValue.serverTimestamp(),
       });
 
+      // 2. إعداد خيارات Jitsi (بنفس إعدادات الـ main لضمان التطابق)
       final options = JitsiMeetConferenceOptions(
-        serverURL: "https://meet.jit.si",
+        serverURL:"https://meet.ffmuc.net",
         room: roomName,
         configOverrides: {
           "prejoinPageEnabled": false,
           "lobbyModeEnabled": false,
+          "disableDeepLinking": true, // ✅ يمنع فتح المتصفح عند المتصل
           "startWithVideoMuted": !isVideoCall,
           "startWithAudioMuted": false,
         },
         featureFlags: {
-          // ✅ السطور التالية تمنع التحويل لمتجر التطبيقات أو المتصفح
-          "welcomePage.enabled": false,        // منع صفحة الترحيب
-          "prejoinPageEnabled": false,        // منع شاشة ما قبل الانضمام
-          "isWebviewEnabled": true,           // إجبار التشغيل كـ WebView داخلي
-          "nativeWelcomePage.enabled": false,  // تعطيل صفحة الترحيب الأصلية لـ Jitsi
-          "conference.enabled": true,
-          "unwelcome.enabled": false,
-          "resolution": 360,
-          "pip.enabled": true,
+          FeatureFlags.welcomePageEnabled: false,
+          FeatureFlags.preJoinPageEnabled: false,
+          FeatureFlags.unsafeRoomWarningEnabled: false, 
+          FeatureFlags.resolution: FeatureFlagVideoResolutions.resolution360p,
+          FeatureFlags.pipEnabled: true,
         },
         userInfo: JitsiMeetUserInfo(
           displayName: currentUser.username,
@@ -58,8 +58,17 @@ class CallCubit extends Cubit<CallState> {
         ),
       );
 
+      // 3. إضافة المستمع (السر اللي بيخليها Native)
       var jitsiMeet = JitsiMeet();
-      await jitsiMeet.join(options);
+      var listener = JitsiMeetEventListener(
+        conferenceJoined: (url) => print("بدأت المكالمة كـ مرسل: $url"),
+        conferenceTerminated: (url, error) {
+           print("انتهت المكالمة: $error");
+           endCall(calleeId); // تنظيف الداتابيز لما يقفل
+        },
+      );
+
+      await jitsiMeet.join(options, listener);
       
       emit(state.copyWith(status: MeetingStatus.success));
       
