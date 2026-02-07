@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart'; // ✅ استيراد المكتبة
 import 'package:tracing_app_new/core/theming/app_styles.dart';
 import 'package:tracing_app_new/core/widgets/appbar_part.dart';
 import 'package:tracing_app_new/feature/auth/cubit/auth_cubit.dart';
@@ -31,42 +32,35 @@ class _SignInPageState extends State<SignInPage> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthCubit, AuthState>(
-      // *** التعديل الرئيسي: إزالة كود التنقل والتركيز على عرض الخطأ فقط ***
       listener: (context, state) {
-        // التعامل مع حالات الخطأ فقط
         if (state is LoginErrorState) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.error), 
-              backgroundColor: Colors.red,
-            ),
+            SnackBar(content: Text(state.error), backgroundColor: Colors.red),
           );
         }
       },
       child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle(
+        value: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
         ),
         child: Scaffold(
-            resizeToAvoidBottomInset: true, // الافتراضي true
+          resizeToAvoidBottomInset: true,
           appBar: AppbarPart(title: "تسجيل الدخول"),
           body: Container(
             constraints: const BoxConstraints.expand(),
             decoration: AppStyles.primaryGradientDecoration,
-            child: Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
+            child: SafeArea(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 40),
+                      SizedBox(height: 40.h),
                       TextFormFieldWidget(
                         title: "البريد الإلكتروني",
                         hinttext: "أدخل بريدك الإلكتروني",
@@ -85,7 +79,7 @@ class _SignInPageState extends State<SignInPage> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 24),
+                      SizedBox(height: 24.h),
 
                       TextFormFieldWidget(
                         title: "كلمة المرور",
@@ -104,12 +98,11 @@ class _SignInPageState extends State<SignInPage> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 10),
+                      SizedBox(height: 10.h),
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: () {
-                            print("تم الضغط على 'هل نسيت كلمة المرور؟'");
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
@@ -125,12 +118,12 @@ class _SignInPageState extends State<SignInPage> {
                               decoration: TextDecoration.underline,
                               decorationColor: Colors.white,
                               color: Colors.white,
-                              fontSize: 18,
+                              fontSize: 18.sp,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      SizedBox(height: 20.h),
 
                       BlocBuilder<AuthCubit, AuthState>(
                         builder: (context, state) {
@@ -145,11 +138,14 @@ class _SignInPageState extends State<SignInPage> {
                           }
 
                           return SizedBox(
-                            width: 200,
-                            height: 50,
+                            width: 200.w,
+                            height: 50.h,
                             child: ElevatedButton.icon(
-                              icon: const Icon(Icons.login_outlined),
-                              label: const Text("تسجيل الدخول"),
+                              icon: Icon(Icons.login_outlined, size: 20.r),
+                              label: Text(
+                                "تسجيل الدخول",
+                                style: TextStyle(fontSize: 16.sp),
+                              ),
                               onPressed: () {
                                 if (_formKey.currentState!.validate()) {
                                   context.read<AuthCubit>().login(
@@ -162,7 +158,7 @@ class _SignInPageState extends State<SignInPage> {
                           );
                         },
                       ),
-                      const SizedBox(height: 25),
+                      SizedBox(height: 25.h),
 
                       LoginPromptWidget(
                         comment: "ليس لديك حساب؟ ",
@@ -175,6 +171,7 @@ class _SignInPageState extends State<SignInPage> {
                           );
                         },
                       ),
+                      SizedBox(height: 50.h),
                     ],
                   ),
                 ),

@@ -21,7 +21,7 @@ class ChildMapWidget extends StatefulWidget {
 
 class _ChildMapWidgetState extends State<ChildMapWidget> {
   final MapController _mapController = MapController();
-
+  final LatLng egyptFallback = const LatLng(30.0444, 31.2357);
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ChildTrackingCubit, ChildTrackingState>(
@@ -43,8 +43,8 @@ class _ChildMapWidgetState extends State<ChildMapWidget> {
           final childLocation = state.location;
 
           // التحقق من جودة الإحداثيات (ليست 0 وليست الموقع الافتراضي القديم)
-          bool isLocationValid = childLocation.latitude != 0 && childLocation.latitude != 24.7136;
-
+          bool isLocationValid =
+              childLocation.latitude != 0 && childLocation.longitude != 0;
           if (!isLocationValid) {
             return const Center(
               child: Column(
@@ -83,11 +83,16 @@ class _ChildMapWidgetState extends State<ChildMapWidget> {
                     child: Column(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(10),
-                            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                            boxShadow: const [
+                              BoxShadow(color: Colors.black26, blurRadius: 4),
+                            ],
                           ),
                           child: Text(
                             widget.childName,
@@ -130,7 +135,9 @@ class _ChildMapWidgetState extends State<ChildMapWidget> {
           Text('خطأ: $error', textAlign: TextAlign.center),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () => context.read<ChildTrackingCubit>().startTrackingChild(widget.childUid),
+            onPressed: () => context
+                .read<ChildTrackingCubit>()
+                .startTrackingChild(widget.childUid),
             child: const Text('إعادة المحاولة'),
           ),
         ],

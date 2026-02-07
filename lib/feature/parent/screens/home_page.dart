@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart'; // ✅ استيراد المكتبة
 import 'package:tracing_app_new/core/theming/app_styles.dart';
 import 'package:tracing_app_new/core/widgets/appbar_part.dart';
 import 'package:tracing_app_new/core/widgets/elevated_button_widget.dart';
@@ -26,7 +27,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ تم حذف BlocProvider من هنا لأننا عرفناه في main.dart
     return Scaffold(
       appBar: const AppbarPart(title: "لوحة التحكم"),
       body: BlocListener<CallCubit, CallState>(
@@ -34,7 +34,7 @@ class _HomePageState extends State<HomePage> {
           if (callState.errorMessage != null && callState.errorMessage!.isNotEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(callState.errorMessage!),
+                content: Text(callState.errorMessage!, style: TextStyle(fontSize: 14.sp)),
                 backgroundColor: Colors.red,
               ),
             );
@@ -44,11 +44,11 @@ class _HomePageState extends State<HomePage> {
           constraints: const BoxConstraints.expand(),
           decoration: AppStyles.primaryGradientDecoration,
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16.r), // ✅ بادينج مرن للشاشة
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 20),
+                SizedBox(height: 10.h),
                 // اسم ولي الأمر
                 BlocBuilder<AuthCubit, AuthState>(
                   builder: (context, authState) {
@@ -58,15 +58,15 @@ class _HomePageState extends State<HomePage> {
                     }
                     return Text(
                       "مرحباً : $parentName",
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                        fontSize: 20.sp, // ✅ نص ترحيبي أكبر ومرن
                         color: Colors.white,
                       ),
                     );
                   },
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 25.h), // ✅ مسافات رأسية مرنة
                 Expanded(
                   child: BlocBuilder<ChildrenCubit, ChildrenState>(
                     builder: (context, childrenState) {
@@ -94,7 +94,7 @@ class _HomePageState extends State<HomePage> {
                         children: [
                           // القائمة المنسدلة
                           _buildChildrenDropdown(children),
-                          const SizedBox(height: 20),
+                          SizedBox(height: 25.h),
                           // زر الموقع الجغرافي
                           ElevatedButtonWidget(
                             onpress: () {
@@ -108,7 +108,7 @@ class _HomePageState extends State<HomePage> {
                             title: "عرض الموقع الجغرافي",
                             icon: Icons.location_on_outlined,
                           ),
-                          const SizedBox(height: 40),
+                          SizedBox(height: 35.h),
                           // أزرار المكالمات
                           _buildCallButtons(),
                         ],
@@ -124,24 +124,32 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // --- Widgets فرعية لتنظيم الكود ---
+  // --- Widgets فرعية مرنة ---
 
   Widget _buildChildrenDropdown(List<UserModel> children) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: EdgeInsets.symmetric(horizontal: 16.w), // ✅ بادينج داخلي مرن
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12.r), // ✅ زوايا مرنة
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 4.r,
+            offset: const Offset(0, 2),
+          )
+        ],
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<UserModel>(
           value: selectedChild,
           isExpanded: true,
-          hint: const Text("اختر طفلاً"),
+          iconSize: 30.r, // ✅ حجم الأيقونة مرن
+          hint: Text("اختر طفلاً", style: TextStyle(fontSize: 16.sp)),
           items: children.map((child) {
             return DropdownMenuItem<UserModel>(
               value: child,
-              child: Text(child.username),
+              child: Text(child.username, style: TextStyle(fontSize: 16.sp)), // ✅ نص العناصر مرن
             );
           }).toList(),
           onChanged: (UserModel? newChild) {
@@ -164,15 +172,15 @@ class _HomePageState extends State<HomePage> {
             Expanded(
               child: ElevatedButtonWidget(
                 onpress: isConnecting ? null : () => _startCall(isVideo: true),
-                title: isConnecting ? "جاري الاتصال..." : "مكالمة فيديو",
+                title: isConnecting ? "جاري..." : "فيديو",
                 icon: Icons.video_call_outlined,
               ),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 12.w), // ✅ مسافة أفقية مرنة
             Expanded(
               child: ElevatedButtonWidget(
                 onpress: isConnecting ? null : () => _startCall(isVideo: false),
-                title: isConnecting ? "جاري الاتصال..." : "مكالمة صوتية",
+                title: isConnecting ? "جاري..." : "صوتية",
                 icon: Icons.phone_callback,
               ),
             ),
@@ -182,11 +190,13 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // دالة بدء المكالمة (المعدلة لتستخدم الـ Cubit العالمي)
   void _startCall({required bool isVideo}) {
     if (selectedChild == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('الرجاء اختيار طفل أولاً'), backgroundColor: Colors.orange),
+        SnackBar(
+          content: Text('الرجاء اختيار طفل أولاً', style: TextStyle(fontSize: 14.sp)),
+          backgroundColor: Colors.orange,
+        ),
       );
       return;
     }
@@ -202,11 +212,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildErrorUI(BuildContext context, String message) {
-     return Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('حدث خطأ: $message', style: const TextStyle(color: Colors.white)),
+          Text('حدث خطأ: $message', style: TextStyle(color: Colors.white, fontSize: 14.sp)),
+          SizedBox(height: 10.h),
           ElevatedButton(
             onPressed: () {
               final authState = context.read<AuthCubit>().state;
@@ -225,8 +236,11 @@ class _HomePageState extends State<HomePage> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text("لا يوجد أبناء مرتبطون بحسابك.", style: TextStyle(color: Colors.white)),
-        const SizedBox(height: 20),
+        Text(
+          "لا يوجد أبناء مرتبطون بحسابك.",
+          style: TextStyle(color: Colors.white, fontSize: 16.sp),
+        ),
+        SizedBox(height: 20.h),
         ElevatedButtonWidget(
           onpress: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ChildrenPage())),
           title: "إدارة الأبناء",

@@ -1,9 +1,8 @@
-// lib/feature/parent/screens/parent_page.dart
-
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart'; // *** أضف هذا السطر ***
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart'; // ✅ استيراد المكتبة
 import 'package:tracing_app_new/core/theming/app_styles.dart';
-import 'package:tracing_app_new/feature/parent/screens/home_page.dart'; // صفحة لوحة التحكم
+import 'package:tracing_app_new/feature/parent/screens/home_page.dart';
 import 'package:tracing_app_new/feature/parent/screens/children_page.dart';
 import 'package:tracing_app_new/feature/parent/screens/notification_page.dart';
 import 'package:tracing_app_new/feature/parent/screens/profile_bage.dart';
@@ -44,12 +43,11 @@ class _ParentPageState extends State<ParentPage> {
 
   @override
   Widget build(BuildContext context) {
-    // *** التعديل: تحديث قائمة الصفحات لتشمل كل الصفحات ***
     final pages = [
-      const HomePage(),      // 0: لوحة التحكم
-      const ChildrenPage(),  // 1: إدارة الأبناء
-      const NotificationPage(), // 2: الإشعارات
-      const ProfileBage(),   // 3: الملف الشخصي
+      const HomePage(),
+      const ChildrenPage(),
+      const NotificationPage(),
+      const ProfileBage(),
     ];
 
     return Scaffold(
@@ -61,57 +59,70 @@ class _ParentPageState extends State<ParentPage> {
         ),
       ),
       bottomNavigationBar: Container(
-        color: const Color.fromARGB(255, 178, 198, 211),
+        // استخدام اللون الخلفي لضمان عدم وجود فراغ تحت المنحنى
+        color: const Color.fromARGB(255, 178, 198, 211), 
         child: Container(
-          decoration: const BoxDecoration(
+          height: 75.h, // ✅ تحديد ارتفاع ثابت ومرن لشريط التنقل
+          decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(30),
-              topRight: Radius.circular(30),
+              topLeft: Radius.circular(30.r), // ✅ زوايا مرنة
+              topRight: Radius.circular(30.r),
             ),
             boxShadow: [
-              BoxShadow(blurRadius: 5, offset: Offset(0, 3)),
+              BoxShadow(
+                blurRadius: 10.r, 
+                offset: Offset(0, -2.h), // ظل خفيف للأعلى
+                color: Colors.black12,
+              ),
             ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              // *** التعديل: تحديث أيقونات وشريط التنقل ***
-              children: [
-                _navItem(Icons.home, 0, "الرئيسية"),
-                _navItem(Icons.people, 1, "الأبناء"),
-                _navItem(Icons.notifications, 2, "الإشعارات"),
-                _navItem(Icons.person, 3, "الملف الشخصي"),
-              ],
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _navItem(Icons.home_rounded, 0, "الرئيسية"),
+              _navItem(Icons.people_alt_rounded, 1, "الأبناء"),
+              _navItem(Icons.notifications_active_rounded, 2, "الإشعارات"),
+              _navItem(Icons.person_rounded, 3, "الحساب"),
+            ],
           ),
         ),
       ),
     );
   }
 
-  // *** تعديل: إضافة تسمية توضيحية للأيقونات ***
-  Widget _navItem(IconData icon, int index, String tooltip) {
+  Widget _navItem(IconData icon, int index, String label) {
     final isSelected = currentIndex == index;
     return InkWell(
       onTap: () => onItemTap(index),
-      borderRadius: BorderRadius.circular(30),
-      child: Tooltip(
-        message: tooltip,
-        child: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isSelected
-                ? const Color.fromARGB(255, 217, 218, 219)
-                : Colors.transparent,
-          ),
-          child: Icon(
-            icon,
-            color: isSelected ? Colors.blue : Colors.grey,
-            size: 25,
-          ),
+      borderRadius: BorderRadius.circular(30.r),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Colors.blue.withOpacity(0.1) // خلفية خفيفة عند الاختيار
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? Colors.blue : Colors.grey,
+              size: 26.r, // ✅ حجم أيقونة مرن
+            ),
+            if (isSelected) // إظهار النص فقط عند الاختيار (اختياري - يعطي طابع عصري)
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.blue,
+                  fontSize: 10.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+          ],
         ),
       ),
     );

@@ -1,7 +1,6 @@
-// lib/feature/parent/screens/children_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart'; // ✅ استيراد المكتبة
 import 'package:tracing_app_new/core/theming/app_styles.dart';
 import 'package:tracing_app_new/core/widgets/appbar_part.dart';
 import 'package:tracing_app_new/feature/auth/cubit/auth_cubit.dart';
@@ -13,25 +12,33 @@ import 'package:tracing_app_new/feature/auth/cubit/parent_state.dart';
 import 'package:tracing_app_new/feature/auth/data/models/user_model.dart';
 import 'package:tracing_app_new/feature/parent/screens/child_tracing_page.dart';
 import 'package:tracing_app_new/feature/parent/widgets/link_child_dialog.dart';
-import 'package:tracing_app_new/feature/auth/data/models/user_model.dart'; // *** إضافة استيراد UserModel ***
 
 class ChildrenPage extends StatelessWidget {
   const ChildrenPage({super.key});
 
-  // *** التعديل: إكمال دالة بناء بطاقة الطفل ***
+  // ✅ تعديل بطاقة الطفل لتكون مرنة
   Widget _buildChildCard(BuildContext context, UserModel child) {
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      margin: EdgeInsets.symmetric(vertical: 8.0.h), // ✅ مسافة مرنة
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)), // ✅ زوايا مرنة
+      elevation: 3,
       child: ListTile(
-        leading: const CircleAvatar(
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h), // ✅ بادينج داخلي مرن
+        leading: CircleAvatar(
+          radius: 25.r, // ✅ حجم الافاتار مرن
           backgroundColor: Colors.blue,
-          child: Icon(Icons.person, color: Colors.white),
+          child: Icon(Icons.person, color: Colors.white, size: 28.r),
         ),
-        title: Text(child.username),
-        subtitle: Text('البريد: ${child.email}'),
-        trailing: const Icon(Icons.arrow_forward_ios),
+        title: Text(
+          child.username,
+          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold), // ✅ نص مرن
+        ),
+        subtitle: Text(
+          'البريد: ${child.email}',
+          style: TextStyle(fontSize: 13.sp), // ✅ نص مرن
+        ),
+        trailing: Icon(Icons.arrow_forward_ios, size: 18.r, color: Colors.grey),
         onTap: () {
-          // عند الضغط على البطاقة، انتقل إلى صفحة التتبع لهذا الطفل
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -67,7 +74,7 @@ class ChildrenPage extends StatelessWidget {
           constraints: const BoxConstraints.expand(),
           decoration: AppStyles.primaryGradientDecoration,
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(16.0.r), // ✅ بادينج الشاشة مرن
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -79,13 +86,20 @@ class ChildrenPage extends StatelessWidget {
                     }
                     return Text(
                       "مرحباً : $parentName",
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: TextStyle(
+                        fontSize: 22.sp, // ✅ نص ترحيبي مرن
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     );
                   },
                 ),
-                const SizedBox(height: 24),
-                const Text("الأبناء المرتبطون بحسابك:", style: TextStyle(fontSize: 18, color: Colors.white70)),
-                const SizedBox(height: 16),
+                SizedBox(height: 20.h), // ✅ مسافة مرنة
+                Text(
+                  "الأبناء المرتبطون بحسابك:",
+                  style: TextStyle(fontSize: 16.sp, color: Colors.white70),
+                ),
+                SizedBox(height: 12.h),
                 Expanded(
                   child: BlocBuilder<ChildrenCubit, ChildrenState>(
                     builder: (context, childrenState) {
@@ -93,14 +107,26 @@ class ChildrenPage extends StatelessWidget {
                         return const Center(child: CircularProgressIndicator(color: Colors.white));
                       }
                       if (childrenState is ChildrenErrorState) {
-                        return Center(child: Text('حدث خطأ: ${childrenState.message}', style: const TextStyle(color: Colors.red)));
+                        return Center(
+                          child: Text(
+                            'حدث خطأ: ${childrenState.message}',
+                            style: TextStyle(color: Colors.red, fontSize: 14.sp),
+                          ),
+                        );
                       }
                       if (childrenState is ChildrenLoadedState) {
                         final children = childrenState.children;
                         if (children.isEmpty) {
-                          return const Center(child: Text('لا يوجد أبناء مرتبطون حالياً.\nاستخدم الزر (+) لإضافة طفل.', style: TextStyle(color: Colors.white), textAlign: TextAlign.center));
+                          return Center(
+                            child: Text(
+                              'لا يوجد أبناء مرتبطون حالياً.\nاستخدم الزر (+) لإضافة طفل.',
+                              style: TextStyle(color: Colors.white, fontSize: 15.sp),
+                              textAlign: TextAlign.center,
+                            ),
+                          );
                         }
                         return ListView.builder(
+                          physics: const BouncingScrollPhysics(),
                           itemCount: children.length,
                           itemBuilder: (context, index) => _buildChildCard(context, children[index]),
                         );
@@ -132,7 +158,7 @@ class ChildrenPage extends StatelessWidget {
           );
         },
         backgroundColor: Colors.white,
-        child: const Icon(Icons.add, color: Colors.blue),
+        child: Icon(Icons.add, color: Colors.blue, size: 30.r), // ✅ حجم الأيقونة مرن
       ),
     );
   }

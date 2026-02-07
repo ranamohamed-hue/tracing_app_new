@@ -54,6 +54,10 @@ dependencies:
   flutter_local_notifications: ^20.0.0
   http: ^1.6.0
   audioplayers: ^6.5.1
+  intl: ^0.20.2
+  permission_handler: ^12.0.1
+  flutter_screenutil: ^5.9.3
+  awesome_notifications: ^0.10.1
 flutter_native_splash:
   color: "#ffffff"
   android: true
@@ -66,6 +70,13 @@ flutter_native_splash:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.4  
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/logoi.png"
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/logoi.png"
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -89,7 +100,8 @@ flutter:
   assets:
     - assets/logoi.png
     - assets/videosplash.mp4
-    - assets/videosplash.mp4
+    - assets/ring.mp3
+    - assets/phone-calling.mp3
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

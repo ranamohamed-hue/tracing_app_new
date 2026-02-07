@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart'; // ✅ إضافة المكتبة
 import 'package:tracing_app_new/core/theming/app_styles.dart';
 import 'package:tracing_app_new/feature/auth/cubit/auth_cubit.dart';
 import 'package:tracing_app_new/feature/auth/cubit/auth_state.dart';
@@ -10,21 +11,21 @@ class ProfileBage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // استخدام الـ Container عشان نطبق الـ Gradient بتاعك في الخلفية
       body: Container(
         width: double.infinity,
         height: double.infinity,
         decoration: AppStyles.primaryGradientDecoration,
         child: BlocConsumer<AuthCubit, AuthState>(
           listener: (context, state) {
-            // لو تم تسجيل الخروج بنجاح ورجعت الحالة للبداية
             if (state is AuthInitialState) {
               Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
             }
-            // إظهار خطأ لو فشل الخروج
             if (state is LogoutErrorState) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.error), backgroundColor: Colors.red),
+                SnackBar(
+                  content: Text(state.error, style: TextStyle(fontSize: 14.sp)),
+                  backgroundColor: Colors.red,
+                ),
               );
             }
           },
@@ -40,47 +41,47 @@ class ProfileBage extends StatelessWidget {
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // صورة البروفايل الدائرية
+                // ✅ صورة البروفايل الدائرية بمقاسات مرنة
                 Container(
-                  padding: const EdgeInsets.all(4),
+                  padding: EdgeInsets.all(4.r),
                   decoration: const BoxDecoration(
                     color: Colors.white24,
                     shape: BoxShape.circle,
                   ),
-                  child: const CircleAvatar(
-                    radius: 55,
+                  child: CircleAvatar(
+                    radius: 55.r, // ✅ نصف قطر مرن
                     backgroundColor: Colors.white,
                     child: Icon(
                       Icons.person,
-                      size: 60,
-                      color: Color(0xFF1A237E), // لون داكن يليق مع الجراديانت
+                      size: 60.r, // ✅ حجم أيقونة مرن
+                      color: const Color(0xFF1A237E),
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20.h),
                 
-                // اسم المستخدم (يفضل استخدام ستايل من ملف الثيم هنا)
+                // ✅ اسم المستخدم
                 Text(
                   name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
-                    fontSize: 24,
+                    fontSize: 24.sp, // ✅ حجم خط مرن
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 
-                // الإيميل
+                // ✅ الإيميل
                 Text(
                   email,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white70,
-                    fontSize: 16,
+                    fontSize: 16.sp,
                   ),
                 ),
                 
-                const SizedBox(height: 60),
+                SizedBox(height: 60.h), // ✅ مسافة مرنة قبل الزر
 
-                // زر تسجيل الخروج
+                // ✅ زر تسجيل الخروج
                 _buildLogoutButton(context, state is LogoutLoadingState),
               ],
             );
@@ -90,36 +91,38 @@ class ProfileBage extends StatelessWidget {
     );
   }
 
-  // ميثود بناء زر تسجيل الخروج بتصميم متناسق
   Widget _buildLogoutButton(BuildContext context, bool isLoading) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
+      padding: EdgeInsets.symmetric(horizontal: 40.w), // ✅ بادينج عرضي مرن
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white.withOpacity(0.15),
           foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 55),
+          minimumSize: Size(double.infinity, 55.h), // ✅ ارتفاع مرن للزر
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(15.r), // ✅ زوايا مرنة
             side: const BorderSide(color: Colors.white30),
           ),
         ),
         onPressed: isLoading ? null : () => _showConfirmDialog(context),
         child: isLoading
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+            ? SizedBox(
+                height: 20.r,
+                width: 20.r,
+                child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
               )
-            : const Row(
+            : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.logout_rounded),
-                  SizedBox(width: 12),
+                  Icon(Icons.logout_rounded, size: 22.r),
+                  SizedBox(width: 12.w),
                   Text(
                     "تسجيل الخروج",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 18.sp, 
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -127,25 +130,35 @@ class ProfileBage extends StatelessWidget {
     );
   }
 
-  // ديالوج تأكيد الخروج بالعربي
   void _showConfirmDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("تنبيه", textAlign: TextAlign.right),
-        content: const Text("هل تريد تسجيل الخروج من الحساب؟", textAlign: TextAlign.right),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        title: Text(
+          "تنبيه", 
+          textAlign: TextAlign.right,
+          style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          "هل تريد تسجيل الخروج من الحساب؟", 
+          textAlign: TextAlign.right,
+          style: TextStyle(fontSize: 15.sp),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("إلغاء"),
+            child: Text("إلغاء", style: TextStyle(fontSize: 14.sp)),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               context.read<AuthCubit>().logout();
             },
-            child: const Text("تأكيد", style: TextStyle(color: Colors.red)),
+            child: Text(
+              "تأكيد", 
+              style: TextStyle(color: Colors.red, fontSize: 14.sp),
+            ),
           ),
         ],
       ),

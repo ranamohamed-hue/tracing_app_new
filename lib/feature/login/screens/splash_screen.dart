@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart'; // ✅ إضافة المكتبة
 import 'package:tracing_app_new/feature/login/screens/sign_in_page.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -22,21 +24,74 @@ class SplashScreenState extends State<SplashScreen> {
         _logo.setLooping(false);
         setState(() {});
 
-        // الانتقال بعد انتهاء الفيديو
-        Future.delayed(_logo.value.duration, () {
-          if (!mounted) return; // لو ال widget مش موجودة خلاص
-          Navigator.pushReplacement(
-            context,
-            PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) => const SignInPage(),
-              transitionDuration: const Duration(seconds: 1),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-            ),
-          );
-        });
+        _handleAppStartupLogics();
       });
+  }
+
+  Future<void> _handleAppStartupLogics() async {
+    await [
+      Permission.camera,
+      Permission.microphone,
+      Permission.notification,
+      Permission.locationWhenInUse,
+    ].request();
+
+    if (await Permission.systemAlertWindow.isDenied) {
+      if (mounted) {
+        await _showOverlayPermissionDialog();
+      }
+    }
+
+    // الانتظار حتى انتهاء الفيديو
+    await Future.delayed(_logo.value.duration);
+    
+    _navigateToSignIn();
+  }
+
+  Future<void> _showOverlayPermissionDialog() async {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15.r), // ✅ زوايا مرنة للديالوج
+        ),
+        title: Text(
+          "صلاحية هامة",
+          style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold), // ✅ نص مرن
+        ),
+        content: Text(
+          "لتتمكن من استقبال المكالمات حتى لو الموبايل مقفول، يرجى تفعيل 'الظهور فوق التطبيقات' في الصفحة التالية.",
+          style: TextStyle(fontSize: 16.sp), // ✅ نص مرن
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h), // ✅ بادينج مرن للزر
+            ),
+            onPressed: () async {
+              Navigator.pop(context);
+              await openAppSettings();
+            },
+            child: Text("تفعيل الآن", style: TextStyle(fontSize: 14.sp)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToSignIn() {
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => const SignInPage(),
+        transitionDuration: const Duration(seconds: 1),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+    );
   }
 
   @override
@@ -61,8 +116,12 @@ class SplashScreenState extends State<SplashScreen> {
             )
           : Container(
               color: const Color.fromARGB(255, 32, 23, 163),
-              child: const Center(
-                child: CircularProgressIndicator(color: Colors.white),
+              child: Center(
+                child: SizedBox(
+                  width: 50.r, // ✅ حجم ثابت متناسق لللودينج
+                  height: 50.r,
+                  child: const CircularProgressIndicator(color: Colors.white),
+                ),
               ),
             ),
     );

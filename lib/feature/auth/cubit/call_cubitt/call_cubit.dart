@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:jitsi_meet_flutter_sdk/jitsi_meet_flutter_sdk.dart';
@@ -7,9 +11,17 @@ import 'package:tracing_app_new/feature/auth/cubit/call_cubitt/call_state.dart';
 
 class CallCubit extends Cubit<CallState> {
   final CallRepo _callRepo;
+  final AudioPlayer _audioPlayer = AudioPlayer();
   
+  Timer? _callTimer;
+  StreamSubscription<DocumentSnapshot>? _callStreamSubscription; 
+
+  // ملاحظة: يفضل نقل هذا المفتاح لملف إعدادات خارجي
+  final String _fcmServerKey = "YOUR_SERVER_KEY_HERE";
+
   CallCubit(this._callRepo) : super(const CallState());
 
+  // === 1. دالة بدء المكالمة (للمتصل) ===
   Future<void> startMeeting({
     required UserModel currentUser, 
     required bool isVideoCall,
@@ -17,13 +29,18 @@ class CallCubit extends Cubit<CallState> {
   }) async {
     emit(state.copyWith(status: MeetingStatus.connecting));
 
-    // ✅ توحيد منطق اسم الغرفة (ثابت ومستقر)
+    _playCallingTone();
+
+    // ضمان اتساق اسم الغرفة بناءً على معرف ولي الأمر
     String roomName = (currentUser.userType.contains('ولي') || currentUser.userType.contains('parent')) 
         ? "room_${currentUser.uid}" 
         : "room_${currentUser.parentUid}";
 
     try {
-      // 1. تحديث بيانات المكالمة في فايربيس للطرف الآخر
+      var userDoc = await FirebaseFirestore.instance.collection('users').doc(calleeId).get();
+      String? studentToken = userDoc.data()?['fcmToken'];
+
+      // تحديث Firestore لإعلام الطرف الآخر
       await FirebaseFirestore.instance.collection('calls').doc(calleeId).set({
         'callerName': currentUser.username,
         'callerId': currentUser.uid,
@@ -34,56 +51,160 @@ class CallCubit extends Cubit<CallState> {
         'timestamp': FieldValue.serverTimestamp(),
       });
 
-      // 2. إعداد خيارات Jitsi (بنفس إعدادات الـ main لضمان التطابق)
-      final options = JitsiMeetConferenceOptions(
-        serverURL:"https://meet.ffmuc.net",
-        room: roomName,
-        configOverrides: {
-          "prejoinPageEnabled": false,
-          "lobbyModeEnabled": false,
-          "disableDeepLinking": true, // ✅ يمنع فتح المتصفح عند المتصل
-          "startWithVideoMuted": !isVideoCall,
-          "startWithAudioMuted": false,
-        },
-        featureFlags: {
-          FeatureFlags.welcomePageEnabled: false,
-          FeatureFlags.preJoinPageEnabled: false,
-          FeatureFlags.unsafeRoomWarningEnabled: false, 
-          FeatureFlags.resolution: FeatureFlagVideoResolutions.resolution360p,
-          FeatureFlags.pipEnabled: true,
-        },
-        userInfo: JitsiMeetUserInfo(
-          displayName: currentUser.username,
-          email: currentUser.email,
-        ),
-      );
+      _listenToCallStatus(calleeId);
 
-      // 3. إضافة المستمع (السر اللي بيخليها Native)
-      var jitsiMeet = JitsiMeet();
-      var listener = JitsiMeetEventListener(
-        conferenceJoined: (url) => print("بدأت المكالمة كـ مرسل: $url"),
-        conferenceTerminated: (url, error) {
-           print("انتهت المكالمة: $error");
-           endCall(calleeId); // تنظيف الداتابيز لما يقفل
-        },
-      );
+      if (studentToken != null) {
+        await _sendNotificationToStudent(
+          token: studentToken,
+          callerName: currentUser.username,
+          roomName: roomName,
+          callerId: currentUser.uid,
+        );
+      }
 
-      await jitsiMeet.join(options, listener);
-      
+      await _joinJitsiRoom(roomName, currentUser.username, currentUser.email, isVideoCall, calleeId);
       emit(state.copyWith(status: MeetingStatus.success));
       
     } catch (e) {
+      _cleanup(calleeId);
       emit(state.copyWith(status: MeetingStatus.error));
-      print("Error starting meeting: $e");
     }
+  }
+
+  // === 2. دالة الانضمام لمكالمة واردة (للمستقبل) ===
+  Future<void> joinIncomingCall({
+    required String roomName,
+    required String userName,
+    String? email,
+  }) async {
+    _stopCallingTone();
+    emit(state.copyWith(status: MeetingStatus.connecting));
+    
+    try {
+      await _joinJitsiRoom(roomName, userName, email ?? "", true, null);
+      emit(state.copyWith(status: MeetingStatus.success));
+    } catch (e) {
+      emit(state.copyWith(status: MeetingStatus.error));
+    }
+  }
+
+  // === دالة مشتركة لإعداد Jitsi ===
+  Future<void> _joinJitsiRoom(String room, String name, String email, bool isVideo, String? calleeId) async {
+    final options = JitsiMeetConferenceOptions(
+      serverURL: "https://meet.ffmuc.net",
+      room: room,
+      configOverrides: {
+        "prejoinPageEnabled": false,
+        "lobbyModeEnabled": false,
+        "startWithVideoMuted": !isVideo,
+        "startWithAudioMuted": false,
+      },
+      featureFlags: {
+        FeatureFlags.welcomePageEnabled: false,
+        FeatureFlags.pipEnabled: true,
+        FeatureFlags.callIntegrationEnabled: true,
+      },
+      userInfo: JitsiMeetUserInfo(displayName: name, email: email),
+    );
+
+    var listener = JitsiMeetEventListener(
+      conferenceJoined: (url) {
+        _stopCallingTone();
+        if (calleeId != null) _startTimer(calleeId);
+      },
+      conferenceTerminated: (url, error) {
+        if (calleeId != null) _cleanup(calleeId);
+      },
+    );
+
+    await JitsiMeet().join(options, listener);
+  }
+
+  void _listenToCallStatus(String calleeId) {
+    _callStreamSubscription?.cancel();
+    _callStreamSubscription = FirebaseFirestore.instance
+        .collection('calls')
+        .doc(calleeId)
+        .snapshots()
+        .listen((snapshot) {
+      if (snapshot.exists) {
+        final status = snapshot.data()?['status'];
+        if (status == 'accepted') {
+          _stopCallingTone();
+        } else if (status == 'declined') {
+          _stopCallingTone();
+          JitsiMeet().hangUp(); 
+          _cleanup(calleeId);
+        }
+      }
+    });
+  }
+
+  Future<void> _sendNotificationToStudent({
+    required String token,
+    required String callerName,
+    required String roomName,
+    required String callerId,
+  }) async {
+    try {
+      await http.post(
+        Uri.parse('https://fcm.googleapis.com/fcm/send'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'key=$_fcmServerKey',
+        },
+        body: jsonEncode({
+          'priority': 'high',
+          'data': {
+            'type': 'incoming_call',
+            'callerName': callerName,
+            'roomName': roomName,
+            'callerId': callerId,
+            'status': 'ringing',
+          },
+          'to': token,
+        }),
+      );
+    } catch (e) { print("FCM Error: $e"); }
+  }
+
+  void _playCallingTone() async {
+    try {
+      await _audioPlayer.setSource(AssetSource('phone-calling.mp3'));
+      await _audioPlayer.setReleaseMode(ReleaseMode.loop);
+      await _audioPlayer.resume();
+    } catch (e) { print("Audio Error: $e"); }
+  }
+
+  void _stopCallingTone() => _audioPlayer.stop();
+
+  void _startTimer(String calleeId) {
+    _callTimer?.cancel();
+    _callTimer = Timer(const Duration(minutes: 10), () {
+      JitsiMeet().hangUp();
+      _cleanup(calleeId);
+    });
+  }
+
+  void _cleanup(String calleeId) {
+    _callTimer?.cancel();
+    _callStreamSubscription?.cancel(); 
+    _stopCallingTone();
+    endCall(calleeId);
   }
 
   Future<void> endCall(String calleeId) async {
     try {
       await FirebaseFirestore.instance.collection('calls').doc(calleeId).delete();
       emit(state.copyWith(status: MeetingStatus.idle));
-    } catch (e) {
-      print("Error ending call: $e");
-    }
+    } catch (e) { print("Error ending call: $e"); }
+  }
+
+  @override
+  Future<void> close() {
+    _callTimer?.cancel();
+    _callStreamSubscription?.cancel();
+    _audioPlayer.dispose();
+    return super.close();
   }
 }

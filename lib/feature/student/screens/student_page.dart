@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart'; // ✅ إضافة المكتبة
 import 'package:tracing_app_new/core/theming/app_styles.dart';
 import 'package:tracing_app_new/core/widgets/appbar_part.dart';
 import 'package:tracing_app_new/core/widgets/elevated_button_widget.dart';
@@ -19,6 +20,7 @@ import 'package:tracing_app_new/feature/auth/cubit/parent_state.dart';
 import 'package:tracing_app_new/feature/auth/cubit/location_state.dart';
 import 'package:tracing_app_new/feature/student/screens/invite_code_page.dart';
 import 'package:tracing_app_new/feature/parent/screens/profile_bage.dart'; 
+import 'package:tracing_app_new/feature/parent/screens/notification_page.dart';
 
 import 'package:tracing_app_new/feature/auth/cubit/call_cubitt/call_cubit.dart';
 import 'package:tracing_app_new/feature/auth/cubit/call_cubitt/call_state.dart';
@@ -53,7 +55,6 @@ class _StudentPageState extends State<StudentPage> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ تم حذف BlocProvider من هنا لأنه موجود في الـ main.dart
     return Scaffold(
       appBar: const AppbarPart(title: "لوحة الطالب"),
       body: MultiBlocListener(
@@ -90,17 +91,17 @@ class _StudentPageState extends State<StudentPage> {
           constraints: const BoxConstraints.expand(),
           decoration: AppStyles.primaryGradientDecoration,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(15.0),
+            padding: EdgeInsets.all(15.0.r), // ✅ تجاوب Padding
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildWelcomeHeader(),
-                const SizedBox(height: 30),
+                SizedBox(height: 30.h), // ✅ تجاوب المسافة
 
                 // 1. زر تتبع الموقع
                 _buildLocationButton(),
 
-                const SizedBox(height: 15),
+                SizedBox(height: 15.h),
 
                 // 2. زر الملف الشخصي
                 ElevatedButtonWidget(
@@ -112,7 +113,7 @@ class _StudentPageState extends State<StudentPage> {
                   icon: Icons.account_circle,
                 ),
 
-                const SizedBox(height: 15),
+                SizedBox(height: 15.h),
 
                 // 3. زر كود الربط
                 ElevatedButtonWidget(
@@ -124,14 +125,26 @@ class _StudentPageState extends State<StudentPage> {
                   icon: Icons.qr_code_scanner,
                 ),
 
-                const SizedBox(height: 15),
+                SizedBox(height: 15.h),
 
-                // 4. أزرار المكالمات
+                // 4. زر الإشعارات
+                ElevatedButtonWidget(
+                  onpress: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const NotificationPage()),
+                  ),
+                  title: "مركز الإشعارات والتنبيهات",
+                  icon: Icons.notifications_active,
+                ),
+
+                SizedBox(height: 15.h),
+
+                // 5. أزرار المكالمات
                 _buildCallOptions(),
 
-                const SizedBox(height: 30),
+                SizedBox(height: 30.h),
 
-                // 5. زر الذكاء الاصطناعي
+                // 6. زر الذكاء الاصطناعي
                 _buildAiButton(),
               ],
             ),
@@ -150,9 +163,9 @@ class _StudentPageState extends State<StudentPage> {
         if (state is AuthenticatedState) name = state.userModel.username;
         return Text(
           "مرحباً بك : $name",
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 20,
+            fontSize: 20.sp, // ✅ تجاوب حجم الخط
             color: Colors.white,
           ),
         );
@@ -193,7 +206,7 @@ class _StudentPageState extends State<StudentPage> {
                 icon: Icons.video_call,
               ),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10.w), // ✅ تجاوب العرض
             Expanded(
               child: ElevatedButtonWidget(
                 onpress: isConnecting ? null : () => _startCall(isVideo: false),
@@ -212,20 +225,20 @@ class _StudentPageState extends State<StudentPage> {
       builder: (context, state) {
         return SizedBox(
           width: double.infinity,
-          height: 55,
+          height: 55.h, // ✅ تجاوب الارتفاع
           child: ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white.withOpacity(0.9),
               foregroundColor: Colors.blue.shade900,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)), // ✅ تجاوب الانحناء
             ),
             onPressed: () => context.read<ChatCubit>().launchChatGpt(),
             icon: state is ChatLoading
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.auto_awesome),
+                ? SizedBox(width: 20.r, height: 20.r, child: const CircularProgressIndicator(strokeWidth: 2))
+                : Icon(Icons.auto_awesome, size: 22.r),
             label: Text(
               state is ChatLoading ? 'جاري الاتصال...' : 'اسأل ذكاء راصد (ChatGPT)',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.sp), // ✅ تجاوب الخط
             ),
           ),
         );
@@ -253,6 +266,13 @@ class _StudentPageState extends State<StudentPage> {
   }
 
   void _showSnackBar(BuildContext context, String message, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: color));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: TextStyle(fontSize: 14.sp)), 
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+      )
+    );
   }
 }
