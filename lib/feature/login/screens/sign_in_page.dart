@@ -6,6 +6,7 @@ import 'package:tracing_app_new/core/theming/app_styles.dart';
 import 'package:tracing_app_new/core/widgets/appbar_part.dart';
 import 'package:tracing_app_new/feature/auth/cubit/auth_cubit.dart';
 import 'package:tracing_app_new/feature/auth/cubit/auth_state.dart';
+import 'package:tracing_app_new/feature/login/screens/forgot_password_page.dart';
 import 'package:tracing_app_new/feature/login/screens/sign_up_page.dart';
 import 'package:tracing_app_new/feature/login/widgets/login_prompt_widget.dart';
 import 'package:tracing_app_new/feature/login/widgets/text_form_field_widget.dart';
@@ -103,11 +104,10 @@ class _SignInPageState extends State<SignInPage> {
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'سيتم توجيهك لصفحة استعادة كلمة المرور',
-                                ),
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const ForgotPasswordPage(),
                               ),
                             );
                           },

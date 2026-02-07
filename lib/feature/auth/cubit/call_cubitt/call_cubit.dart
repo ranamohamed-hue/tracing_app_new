@@ -6,22 +6,23 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:jitsi_meet_flutter_sdk/jitsi_meet_flutter_sdk.dart';
 import 'package:tracing_app_new/feature/auth/data/models/user_model.dart';
-import 'package:tracing_app_new/feature/auth/data/repo/call_repo.dart' hide MeetingStatus; 
 import 'package:tracing_app_new/feature/auth/cubit/call_cubitt/call_state.dart';
+import 'package:tracing_app_new/feature/auth/data/repo/call_repo_impl.dart'; // تأكدي من صحة المسار
 
 class CallCubit extends Cubit<CallState> {
-  final CallRepo _callRepo;
   final AudioPlayer _audioPlayer = AudioPlayer();
-  
+  final CallRepoImpl _callRepo; // تم الربط مع المستودع بنجاح
+
   Timer? _callTimer;
   StreamSubscription<DocumentSnapshot>? _callStreamSubscription; 
 
-  // ملاحظة: يفضل نقل هذا المفتاح لملف إعدادات خارجي
+  // مفتاح FCM - يفضل لاحقاً نقله لملف إعدادات آمن
   final String _fcmServerKey = "YOUR_SERVER_KEY_HERE";
 
+  // المنشئ الوحيد والمطلوب
   CallCubit(this._callRepo) : super(const CallState());
 
-  // === 1. دالة بدء المكالمة (للمتصل) ===
+  // === 1. دالة بدء المكالمة ===
   Future<void> startMeeting({
     required UserModel currentUser, 
     required bool isVideoCall,
@@ -31,16 +32,13 @@ class CallCubit extends Cubit<CallState> {
 
     _playCallingTone();
 
-    // ضمان اتساق اسم الغرفة بناءً على معرف ولي الأمر
-    String roomName = (currentUser.userType.contains('ولي') || currentUser.userType.contains('parent')) 
-        ? "room_${currentUser.uid}" 
-        : "room_${currentUser.parentUid}";
+    // اسم الغرفة الموحد بناءً على معرف الطالب
+    String roomName = "room_$calleeId";
 
     try {
       var userDoc = await FirebaseFirestore.instance.collection('users').doc(calleeId).get();
       String? studentToken = userDoc.data()?['fcmToken'];
 
-      // تحديث Firestore لإعلام الطرف الآخر
       await FirebaseFirestore.instance.collection('calls').doc(calleeId).set({
         'callerName': currentUser.username,
         'callerId': currentUser.uid,
@@ -71,7 +69,7 @@ class CallCubit extends Cubit<CallState> {
     }
   }
 
-  // === 2. دالة الانضمام لمكالمة واردة (للمستقبل) ===
+  // === 2. دالة الانضمام لمكالمة واردة ===
   Future<void> joinIncomingCall({
     required String roomName,
     required String userName,
@@ -88,7 +86,7 @@ class CallCubit extends Cubit<CallState> {
     }
   }
 
-  // === دالة مشتركة لإعداد Jitsi ===
+  // === دالة إعداد Jitsi ===
   Future<void> _joinJitsiRoom(String room, String name, String email, bool isVideo, String? calleeId) async {
     final options = JitsiMeetConferenceOptions(
       serverURL: "https://meet.ffmuc.net",
@@ -133,7 +131,7 @@ class CallCubit extends Cubit<CallState> {
           _stopCallingTone();
         } else if (status == 'declined') {
           _stopCallingTone();
-          JitsiMeet().hangUp(); 
+          JitsiMeet().hangUp();
           _cleanup(calleeId);
         }
       }
@@ -161,6 +159,7 @@ class CallCubit extends Cubit<CallState> {
             'roomName': roomName,
             'callerId': callerId,
             'status': 'ringing',
+            'click_action': 'FLUTTER_NOTIFICATION_CLICK',
           },
           'to': token,
         }),
@@ -170,7 +169,7 @@ class CallCubit extends Cubit<CallState> {
 
   void _playCallingTone() async {
     try {
-      await _audioPlayer.setSource(AssetSource('phone-calling.mp3'));
+      await _audioPlayer.setSource(AssetSource('audio/phone_calling.mp3'));
       await _audioPlayer.setReleaseMode(ReleaseMode.loop);
       await _audioPlayer.resume();
     } catch (e) { print("Audio Error: $e"); }
@@ -180,7 +179,7 @@ class CallCubit extends Cubit<CallState> {
 
   void _startTimer(String calleeId) {
     _callTimer?.cancel();
-    _callTimer = Timer(const Duration(minutes: 10), () {
+    _callTimer = Timer(const Duration(minutes: 15), () {
       JitsiMeet().hangUp();
       _cleanup(calleeId);
     });

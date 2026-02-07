@@ -15,9 +15,18 @@ abstract class AuthRepo {
 
   Future<Either<String, void>> logout();
   Future<Either<String, UserModel>> getCurrentUser();
-  Future<Either<String, void>> updateUserLocation(String uid, GeoPoint location);
+  Future<Either<String, void>> updateUserLocation(
+    String uid,
+    GeoPoint location,
+  );
   Future<Either<String, String>> generateInviteCode(String studentUid);
-  Future<Either<String, void>> linkParentToChild({required String parentUid, required String inviteCode});
+  Future<Either<String, void>> linkParentToChild({
+    required String parentUid,
+    required String inviteCode,
+  });
   Future<Either<String, List<UserModel>>> getParentChildren(String parentUid);
+  Future<Either<String, String>> sendPasswordResetEmail({
+    required String email,
+  });
   Stream<GeoPoint> getChildLocationStream(String childUid);
 }

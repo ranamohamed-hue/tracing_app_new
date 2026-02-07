@@ -84,6 +84,24 @@ class AuthRepoImpl implements AuthRepo {
     }
   }
 
+@override
+  Future<Either<String, String>> sendPasswordResetEmail({
+    required String email,
+  }) async {
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: email);
+      return const Right(
+        'تم إرسال رابط استعادة كلمة المرور بنجاح! يرجى التحقق من بريدك الإلكتروني.',
+      );
+    } on FirebaseAuthException catch (e) {
+      // استخدمنا الدالة المساعدة اللي انتي عاملاها للمابينج
+      return Left(_mapFirebaseErrorToMessage(e.code));
+    } catch (e) {
+      return Left('حدث خطأ غير متوقع: ${e.toString()}');
+    }
+  }
+
+
   @override
   Future<Either<String, void>> logout() async {
     try {

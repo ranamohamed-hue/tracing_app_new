@@ -70,13 +70,13 @@ flutter_native_splash:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_launcher_icons: ^0.14.4  
+  flutter_launcher_icons: ^0.14.4
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/logoi.png"
+  image_path: "assets/logoo.png"
   adaptive_icon_background: "#ffffff"
-  adaptive_icon_foreground: "assets/logoi.png"
+  adaptive_icon_foreground: "assets/logoo.png"
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

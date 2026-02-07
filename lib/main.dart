@@ -10,27 +10,25 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
 
-// استيراد الإعدادات والخدمات
-import 'firebase_options.dart';
-import 'package:tracing_app_new/core/services/notification_service.dart';
-
-// استيراد الـ Cubits والـ Repos
-import 'package:tracing_app_new/feature/auth/cubit/auth_cubit.dart';
-import 'package:tracing_app_new/feature/auth/cubit/auth_state.dart';
+// Repos & Cubits
 import 'package:tracing_app_new/feature/auth/data/repo/auth_repo.dart';
 import 'package:tracing_app_new/feature/auth/data/repo/auth_repo_impl.dart';
-import 'package:tracing_app_new/feature/auth/cubit/call_cubitt/call_cubit.dart';
 import 'package:tracing_app_new/feature/auth/data/repo/call_repo_impl.dart';
+import 'package:tracing_app_new/feature/auth/cubit/auth_cubit.dart';
+import 'package:tracing_app_new/feature/auth/cubit/auth_state.dart';
+import 'package:tracing_app_new/feature/auth/cubit/call_cubitt/call_cubit.dart';
+import 'package:tracing_app_new/core/theming/logic/theme_cubit.dart';
+import 'package:tracing_app_new/core/theming/logic/theme_state.dart';
 import 'package:tracing_app_new/feature/parent/logic/chat_cubit.dart';
 import 'package:tracing_app_new/feature/auth/cubit/children_cubit.dart';
 import 'package:tracing_app_new/feature/auth/cubit/location_cubit.dart';
 import 'package:tracing_app_new/feature/auth/cubit/parent_cubit.dart';
 import 'package:tracing_app_new/feature/auth/cubit/child_tracing_cubit.dart';
 
-// استيراد الثيم والشاشات
+// Services & Screens
+import 'firebase_options.dart';
+import 'package:tracing_app_new/core/services/notification_service.dart';
 import 'package:tracing_app_new/core/theming/app_theme.dart';
-import 'package:tracing_app_new/core/theming/logic/theme_cubit.dart';
-import 'package:tracing_app_new/core/theming/logic/theme_state.dart';
 import 'package:tracing_app_new/feature/login/screens/splash_screen.dart';
 import 'package:tracing_app_new/feature/login/screens/sign_in_page.dart';
 import 'package:tracing_app_new/feature/parent/screens/parent_page.dart';
@@ -39,38 +37,43 @@ import 'package:tracing_app_new/feature/auth/cubit/call_cubitt/incoming_call_ove
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
+// ✅ تعديل دالة الخلفية لتكون "قوية" وتعمل بشكل مستقل
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // تهيئة Firebase ضرورية جداً داخل هذه الدالة لأنها تعمل في Process منفصل
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   
+  // تهيئة الإشعارات داخل الخلفية لضمان عمل الـ Channels
+  await NotificationService.initialize();
+
   if (message.data['type'] == 'incoming_call') {
-    NotificationService.showCallNotification(message);
+    // استدعاء عرض الإشعار الذي يحتوي على FullScreenIntent
+    await NotificationService.showCallNotification(message);
   }
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // تهيئة Firebase
+
+  // 1. تهيئة Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  
-  // تهيئة خدمات الإشعارات (Awesome Notifications)
+
+  // 2. تهيئة خدمات الإشعارات
   await NotificationService.initialize();
   
-  // تهيئة مستمعي الرسائل في الواجهة (Foreground)
-  NotificationService.initializeFcmListeners();
-  
-  // تفعيل معالج الخلفية
+  // 3. تفعيل معالج الخلفية (يجب أن يكون قبل أي مستمع آخر)
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  // إعداد المستودعات
+  // 4. تهيئة مستمعي الواجهة (التطبيق مفتوح)
+  NotificationService.initializeFcmListeners();
+
+  // إعداد الـ Repositories
   final authRepo = AuthRepoImpl(
     firebaseAuth: FirebaseAuth.instance,
     firebaseFirestore: FirebaseFirestore.instance,
   );
   final callRepo = CallRepoImpl();
 
-  // إعدادات الشاشة (System UI)
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   runApp(
@@ -110,7 +113,7 @@ class MyApp extends StatelessWidget {
           builder: (context, themeState) {
             return MaterialApp(
               debugShowCheckedModeBanner: false,
-              navigatorKey: navigatorKey, // ربط المفتاح العالمي هنا
+              navigatorKey: navigatorKey,
               title: 'Tracing App',
               localizationsDelegates: const [
                 GlobalMaterialLocalizations.delegate,
@@ -122,32 +125,27 @@ class MyApp extends StatelessWidget {
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.darkTheme,
               themeMode: themeState.themeMode,
-              builder: (context, widget) {
-                return MediaQuery(
-                  data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
-                  child: widget!,
-                );
-              },
               home: const AuthWrapper(),
-              routes: {
-                '/parentHome': (context) => const ParentPage(),
-                '/studentHome': (context) => const StudentPage(),
-                '/callScreen': (context) {
-                  final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-                  return IncomingCallOverlay(
-                    callerName: args['callerName'] ?? 'متصل مجهول',
-                    roomName: args['roomName'],
-                    isVideo: true,
-                    onAccept: () {
-                      // الحفاظ على اتساق اسم الغرفة عبر الـ Cubit
-                      context.read<CallCubit>().joinIncomingCall(
-                        roomName: args['roomName'],
-                        userName: "مستخدم", 
-                      );
-                    },
-                    onDecline: () => Navigator.pop(context),
+              onGenerateRoute: (settings) {
+                if (settings.name == '/callScreen') {
+                  final args = settings.arguments as Map<String, dynamic>;
+                  return MaterialPageRoute(
+                    builder: (context) => IncomingCallOverlay(
+                      callerName: args['callerName'] ?? 'متصل مجهول',
+                      roomName: args['roomName'], // نستخدم roomName ليتوافق مع الـ Cubit
+                      isVideo: true,
+                      onAccept: () {
+                        // استخدام الـ roomName من الـ arguments
+                        context.read<CallCubit>().joinIncomingCall(
+                          roomName: args['roomName'],
+                          userName: "مستخدم",
+                        );
+                      },
+                      onDecline: () => Navigator.pop(context),
+                    ),
                   );
-                },
+                }
+                return null;
               },
             );
           },
@@ -159,21 +157,28 @@ class MyApp extends StatelessWidget {
 
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
-
   @override
   State<AuthWrapper> createState() => _AuthWrapperState();
 }
 
 class _AuthWrapperState extends State<AuthWrapper> {
-  
-  // حفظ توكن FCM في Firestore
+  bool _isListenerStarted = false; // لمنع تكرار المستمعين
+
   void _saveDeviceToken(String userId) async {
     try {
-      String? token = await FirebaseMessaging.instance.getToken();
-      if (token != null) {
-        await FirebaseFirestore.instance.collection('users').doc(userId).set({
-          'fcmToken': token,
-        }, SetOptions(merge: true));
+      NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+        String? token = await FirebaseMessaging.instance.getToken();
+        if (token != null) {
+          await FirebaseFirestore.instance.collection('users').doc(userId).set({
+            'fcmToken': token,
+          }, SetOptions(merge: true));
+        }
       }
     } catch (e) {
       debugPrint("FCM Token Error: $e");
@@ -182,35 +187,28 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthCubit, AuthState>(
-      listener: (context, state) {
-        if (state is SignUpVerificationSentState) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.green),
-          );
-        }
-      },
-      child: BlocBuilder<AuthCubit, AuthState>(
-        builder: (context, state) {
-          if (state is AuthCheckingState) return const SplashScreen();
+    return BlocBuilder<AuthCubit, AuthState>(
+      builder: (context, state) {
+        if (state is AuthCheckingState) return const SplashScreen();
 
-          if (state is AuthenticatedState) {
-            // تنفيذ العمليات عند نجاح الدخول
-            _saveDeviceToken(state.userModel.uid);
+        if (state is AuthenticatedState) {
+          _saveDeviceToken(state.userModel.uid);
 
-            // بدء مراقبة Firestore للمكالمات الواردة
+          // تشغيل المستمع مرة واحدة فقط عند تسجيل الدخول
+          if (!_isListenerStarted) {
             NotificationService.listenForIncomingCalls(state.userModel.uid);
-
-            final String type = state.userModel.userType.trim().toLowerCase();
-            if (type.contains('طالب') || type.contains('student')) {
-              return const StudentPage();
-            } else {
-              return const ParentPage();
-            }
+            _isListenerStarted = true;
           }
-          return const SignInPage();
-        },
-      ),
+
+          final String type = state.userModel.userType.trim().toLowerCase();
+          if (type.contains('طالب') || type.contains('student')) {
+            return const StudentPage();
+          } else {
+            return const ParentPage();
+          }
+        }
+        return const SignInPage();
+      },
     );
   }
 }

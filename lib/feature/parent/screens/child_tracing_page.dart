@@ -65,9 +65,18 @@ class _ChildTracingPageState extends State<ChildTracingPage> {
 
   void _simulateChildLocation() {
     final random = Random();
+
+    // إحداثيات مركز القاهرة (مصر)
+    const double egyptLat = 30.0444;
+    const double egyptLng = 31.2357;
+
+    // إضافة تغيير طفيف جداً (حوالي 100-500 متر) لكي تلاحظي حركة الماركر على الخريطة
+    final double latVariation = (random.nextDouble() - 0.5) * 0.005;
+    final double lngVariation = (random.nextDouble() - 0.5) * 0.005;
+
     final fakeLocation = LatLng(
-      30.0444 + (random.nextDouble() - 0.5) * 0.01,
-      31.2357 + (random.nextDouble() - 0.5) * 0.01,
+      egyptLat + latVariation,
+      egyptLng + lngVariation,
     );
     context
         .read<AuthRepo>()
@@ -80,11 +89,23 @@ class _ChildTracingPageState extends State<ChildTracingPage> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'تم تحديث موقع ${widget.child.username} (محاكاة)',
-                  style: TextStyle(fontSize: 14.sp), // ✅ نص السناك بار مرن
+                  'تم تحديث موقع ${widget.child.username} إلى القاهرة (محاكاة)',
+                  style: TextStyle(fontSize: 14.sp, fontFamily: 'Cairo'),
                 ),
-                backgroundColor: Colors.blueAccent,
-                duration: const Duration(seconds: 1),
+                backgroundColor:
+                    Colors.green, // غيرت اللون للأخضر ليدل على النجاح
+                duration: const Duration(seconds: 2),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        })
+        .catchError((error) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('خطأ في التحديث: $error'),
+                backgroundColor: Colors.red,
               ),
             );
           }

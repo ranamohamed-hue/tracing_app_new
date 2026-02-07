@@ -63,3 +63,13 @@ class LogoutErrorState extends AuthState {
   @override
   List<Object> get props => [error];
 }
+// حالات استعادة كلمة المرور
+class PasswordResetLoadingState extends AuthState {}
+class PasswordResetSuccessState extends AuthState {
+  final String message;
+  PasswordResetSuccessState(this.message);
+}
+class PasswordResetErrorState extends AuthState {
+  final String error;
+  PasswordResetErrorState(this.error);
+}

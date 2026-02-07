@@ -19,105 +19,113 @@ class ChildMapWidget extends StatefulWidget {
   State<ChildMapWidget> createState() => _ChildMapWidgetState();
 }
 
+// ... الاستيرادات كما هي
+
 class _ChildMapWidgetState extends State<ChildMapWidget> {
   final MapController _mapController = MapController();
   final LatLng egyptFallback = const LatLng(30.0444, 31.2357);
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ChildTrackingCubit, ChildTrackingState>(
       builder: (context, state) {
-        // 1. حالة التحميل
         if (state is ChildLocationLoadingState) {
           return const Center(
             child: CircularProgressIndicator(color: Colors.blue),
           );
         }
 
-        // 2. حالة الخطأ
         if (state is ChildLocationErrorState) {
           return _buildErrorWidget(state.error);
         }
 
-        // 3. حالة وجود تحديث للموقع
         if (state is ChildLocationUpdatedState) {
           final childLocation = state.location;
 
-          // التحقق من جودة الإحداثيات (ليست 0 وليست الموقع الافتراضي القديم)
+          // 1. فحص جودة الإحداثيات
           bool isLocationValid =
               childLocation.latitude != 0 && childLocation.longitude != 0;
+
+          // 2. فحص المسافة (صمام الأمان لمصر)
+          // إذا كانت الإحداثيات خارج حدود مصر (مثلاً واشنطن 38)، نعتبرها "بعيدة"
+          final bool isWayOff =
+              childLocation.latitude > 35 || childLocation.latitude < 22;
+
           if (!isLocationValid) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 15),
-                  Text("بانتظار إشارة GPS دقيقة من جهاز الطالب..."),
-                ],
-              ),
-            );
+            return const Center(child: Text("بانتظار إشارة GPS دقيقة..."));
           }
 
-          // تحريك الكاميرا بنعومة لموقع الطالب الجديد
+          // 3. تحريك الكاميرا (هنا يتم استخدام المنطق الجديد)
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            _mapController.move(childLocation, 16.0);
+            if (isWayOff) {
+              // إذا كانت الإحداثيات القادمة من فيربيز خاطئة أو بعيدة جداً، ابقَ في مصر
+              _mapController.move(egyptFallback, 12.0);
+            } else {
+              // إذا كانت الإحداثيات في مصر (كما فعلتِ في فيربيز)، اذهب إليها
+              _mapController.move(childLocation, 16.0);
+            }
           });
 
           return FlutterMap(
             mapController: _mapController,
             options: MapOptions(
-              initialCenter: childLocation,
-              initialZoom: 16.0,
+              // البدء بموقع مصر الافتراضي إذا كان الموقع القادم من فيربيز غير منطقي
+              initialCenter: isWayOff ? egyptFallback : childLocation,
+              initialZoom: isWayOff ? 12.0 : 16.0,
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.all,
+              ),
             ),
             children: [
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.example.tracing_app',
               ),
-              MarkerLayer(
-                markers: [
-                  Marker(
-                    point: childLocation,
-                    width: 80,
-                    height: 100,
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                            boxShadow: const [
-                              BoxShadow(color: Colors.black26, blurRadius: 4),
-                            ],
-                          ),
-                          child: Text(
-                            widget.childName,
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10,
+              // أظهري الماركر فقط إذا كانت الإحداثيات داخل النطاق المصري الصحيح
+              if (!isWayOff)
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: childLocation,
+                      width: 80,
+                      height: 100,
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: const [
+                                BoxShadow(color: Colors.black26, blurRadius: 4),
+                              ],
+                            ),
+                            child: Text(
+                              widget.childName,
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                              ),
                             ),
                           ),
-                        ),
-                        const Icon(
-                          Icons.person_pin_circle,
-                          color: Colors.red,
-                          size: 45,
-                        ),
-                      ],
+                          const Icon(
+                            Icons.person_pin_circle,
+                            color: Colors.red,
+                            size: 45,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
             ],
           );
         }
 
-        // 4. الحالة الأولية
         return const Center(
           child: Text("يرجى تفعيل الموقع من جهاز الطالب أولاً"),
         );

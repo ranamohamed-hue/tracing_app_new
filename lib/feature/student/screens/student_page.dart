@@ -1,29 +1,11 @@
 // lib/feature/student/screens/student_page.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart'; // ✅ إضافة المكتبة
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tracing_app_new/core/theming/app_styles.dart';
-import 'package:tracing_app_new/core/widgets/appbar_part.dart';
-import 'package:tracing_app_new/core/widgets/elevated_button_widget.dart';
-import 'package:tracing_app_new/feature/auth/cubit/auth_cubit.dart';
-import 'package:tracing_app_new/feature/auth/cubit/auth_state.dart';
-import 'package:tracing_app_new/feature/auth/cubit/parent_cubit.dart';
-import 'package:tracing_app_new/feature/auth/cubit/location_cubit.dart';
-
-// منع التضارب في المسميات
-import 'package:tracing_app_new/feature/auth/data/repo/call_repo.dart' hide MeetingStatus;
-
-import 'package:tracing_app_new/feature/parent/logic/chat_cubit.dart';
-import 'package:tracing_app_new/feature/parent/logic/chat_state.dart';
-import 'package:tracing_app_new/feature/auth/cubit/parent_state.dart';
-import 'package:tracing_app_new/feature/auth/cubit/location_state.dart';
-import 'package:tracing_app_new/feature/student/screens/invite_code_page.dart';
-import 'package:tracing_app_new/feature/parent/screens/profile_bage.dart'; 
+import 'package:tracing_app_new/feature/parent/screens/profile_bage.dart';
 import 'package:tracing_app_new/feature/parent/screens/notification_page.dart';
-
-import 'package:tracing_app_new/feature/auth/cubit/call_cubitt/call_cubit.dart';
-import 'package:tracing_app_new/feature/auth/cubit/call_cubitt/call_state.dart';
+import 'package:tracing_app_new/feature/student/screens/home_student_page.dart';
 
 class StudentPage extends StatefulWidget {
   const StudentPage({super.key});
@@ -33,246 +15,102 @@ class StudentPage extends StatefulWidget {
 }
 
 class _StudentPageState extends State<StudentPage> {
-  @override
-  void initState() {
-    super.initState();
-    // تفعيل الموقع تلقائياً عند الدخول
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _activateLocationAutomatically();
-    });
-  }
+  int currentIndex = 0;
 
-  void _activateLocationAutomatically() {
-    final authState = context.read<AuthCubit>().state;
-    if (authState is AuthenticatedState) {
-      final locationCubit = context.read<LocationCubit>();
-      if (locationCubit.state is! TrackingStartedState &&
-          locationCubit.state is! LocationUpdatedState) {
-        locationCubit.toggleTracking(authState.userModel.uid);
-      }
-    }
+  // قائمة الصفحات
+  final List<Widget> pages = [
+    const HomeStudentPage(),
+    const NotificationPage(),
+    const ProfileBage(),
+  ];
+
+  void onItemTap(int index) {
+    setState(() {
+      currentIndex = index;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const AppbarPart(title: "لوحة الطالب"),
-      body: MultiBlocListener(
-        listeners: [
-          BlocListener<LocationCubit, LocationState>(
-            listener: (context, state) {
-              if (state is LocationErrorState) {
-                _showSnackBar(context, state.error, Colors.orange.shade800);
-              }
-              if (state is TrackingStartedState) {
-                _showSnackBar(context, 'تم تفعيل تتبع الموقع تلقائياً', Colors.green);
-              }
-            },
+      // لإبقاء الخلفية ثابتة خلف الصفحات
+      body: Container(
+        constraints: const BoxConstraints.expand(),
+        decoration: AppStyles.primaryGradientDecoration,
+        child: IndexedStack(index: currentIndex, children: pages),
+      ),
+      bottomNavigationBar: _buildCustomBottomNav(),
+    );
+  }
+
+  Widget _buildCustomBottomNav() {
+    return Container(
+      color: const Color.fromARGB(
+        255,
+        178,
+        198,
+        211,
+      ), // لون الخلفية خلف الانحناء
+      child: Container(
+        height: 75.h,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30.r),
+            topRight: Radius.circular(30.r),
           ),
-          BlocListener<ParentCubit, ParentState>(
-            listener: (context, state) {
-              if (state is InviteCodeErrorState) {
-                _showSnackBar(context, 'فشل إنشاء الكود: ${state.error}', Colors.red);
-              }
-              if (state is InviteCodeGeneratedState) {
-                _showSnackBar(context, 'تم إنشاء كود الدعوة بنجاح!', Colors.green);
-              }
-            },
-          ),
-          BlocListener<CallCubit, CallState>(
-            listener: (context, callState) {
-              if (callState.errorMessage != null && callState.errorMessage!.isNotEmpty) {
-                _showSnackBar(context, callState.errorMessage!, Colors.red);
-              }
-            },
-          ),
-        ],
-        child: Container(
-          constraints: const BoxConstraints.expand(),
-          decoration: AppStyles.primaryGradientDecoration,
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(15.0.r), // ✅ تجاوب Padding
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildWelcomeHeader(),
-                SizedBox(height: 30.h), // ✅ تجاوب المسافة
-
-                // 1. زر تتبع الموقع
-                _buildLocationButton(),
-
-                SizedBox(height: 15.h),
-
-                // 2. زر الملف الشخصي
-                ElevatedButtonWidget(
-                  onpress: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ProfileBage()),
-                  ),
-                  title: "الملف الشخصي والإعدادات",
-                  icon: Icons.account_circle,
-                ),
-
-                SizedBox(height: 15.h),
-
-                // 3. زر كود الربط
-                ElevatedButtonWidget(
-                  onpress: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const InviteCodePage()),
-                  ),
-                  title: "عرض كود ربط ولي الأمر",
-                  icon: Icons.qr_code_scanner,
-                ),
-
-                SizedBox(height: 15.h),
-
-                // 4. زر الإشعارات
-                ElevatedButtonWidget(
-                  onpress: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const NotificationPage()),
-                  ),
-                  title: "مركز الإشعارات والتنبيهات",
-                  icon: Icons.notifications_active,
-                ),
-
-                SizedBox(height: 15.h),
-
-                // 5. أزرار المكالمات
-                _buildCallOptions(),
-
-                SizedBox(height: 30.h),
-
-                // 6. زر الذكاء الاصطناعي
-                _buildAiButton(),
-              ],
+          boxShadow: [
+            BoxShadow(
+              blurRadius: 10.r,
+              offset: Offset(0, -2.h),
+              color: Colors.black12,
             ),
-          ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _navItem(Icons.home_rounded, 0, "الرئيسية"),
+            _navItem(Icons.notifications_active_rounded, 1, "الإشعارات"),
+            _navItem(Icons.person_rounded, 2, "الحساب"),
+          ],
         ),
       ),
     );
   }
 
-  // --- Widgets فرعية لتحسين القراءة ---
-
-  Widget _buildWelcomeHeader() {
-    return BlocBuilder<AuthCubit, AuthState>(
-      builder: (context, state) {
-        String name = "الطالب";
-        if (state is AuthenticatedState) name = state.userModel.username;
-        return Text(
-          "مرحباً بك : $name",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 20.sp, // ✅ تجاوب حجم الخط
-            color: Colors.white,
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildLocationButton() {
-    return BlocBuilder<LocationCubit, LocationState>(
-      builder: (context, locationState) {
-        final bool isTracking =
-            locationState is TrackingStartedState ||
-            locationState is LocationUpdatedState;
-        return ElevatedButtonWidget(
-          onpress: () {
-            final authState = context.read<AuthCubit>().state;
-            if (authState is AuthenticatedState) {
-              context.read<LocationCubit>().toggleTracking(authState.userModel.uid);
-            }
-          },
-          title: isTracking ? "إيقاف تتبع موقعي" : "تفعيل التتبع المباشر",
-          icon: isTracking ? Icons.location_off : Icons.location_on,
-        );
-      },
-    );
-  }
-
-  Widget _buildCallOptions() {
-    return BlocBuilder<CallCubit, CallState>(
-      builder: (context, callState) {
-        final isConnecting = callState.status == MeetingStatus.connecting;
-        return Row(
+  Widget _navItem(IconData icon, int index, String label) {
+    final isSelected = currentIndex == index;
+    return InkWell(
+      onTap: () => onItemTap(index),
+      borderRadius: BorderRadius.circular(30.r),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blue.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: ElevatedButtonWidget(
-                onpress: isConnecting ? null : () => _startCall(isVideo: true),
-                title: isConnecting ? "..." : "فيديو",
-                icon: Icons.video_call,
-              ),
+            Icon(
+              icon,
+              color: isSelected ? Colors.blue : Colors.grey,
+              size: 26.r,
             ),
-            SizedBox(width: 10.w), // ✅ تجاوب العرض
-            Expanded(
-              child: ElevatedButtonWidget(
-                onpress: isConnecting ? null : () => _startCall(isVideo: false),
-                title: isConnecting ? "..." : "صوتية",
-                icon: Icons.phone,
+            if (isSelected)
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.blue,
+                  fontSize: 10.sp,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
           ],
-        );
-      },
-    );
-  }
-
-  Widget _buildAiButton() {
-    return BlocBuilder<ChatCubit, ChatState>(
-      builder: (context, state) {
-        return SizedBox(
-          width: double.infinity,
-          height: 55.h, // ✅ تجاوب الارتفاع
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white.withOpacity(0.9),
-              foregroundColor: Colors.blue.shade900,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)), // ✅ تجاوب الانحناء
-            ),
-            onPressed: () => context.read<ChatCubit>().launchChatGpt(),
-            icon: state is ChatLoading
-                ? SizedBox(width: 20.r, height: 20.r, child: const CircularProgressIndicator(strokeWidth: 2))
-                : Icon(Icons.auto_awesome, size: 22.r),
-            label: Text(
-              state is ChatLoading ? 'جاري الاتصال...' : 'اسأل ذكاء راصد (ChatGPT)',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.sp), // ✅ تجاوب الخط
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _startCall({required bool isVideo}) {
-    final authState = context.read<AuthCubit>().state;
-    if (authState is AuthenticatedState) {
-      final studentUser = authState.userModel;
-      final parentUid = studentUser.parentUid;
-
-      if (parentUid == null || parentUid.isEmpty) {
-        _showSnackBar(context, 'لم يتم ربطك بحساب ولي أمر بعد.', Colors.orange);
-        return;
-      }
-
-      context.read<CallCubit>().startMeeting(
-            currentUser: studentUser,
-            isVideoCall: isVideo,
-            calleeId: parentUid,
-          );
-    }
-  }
-
-  void _showSnackBar(BuildContext context, String message, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, style: TextStyle(fontSize: 14.sp)), 
-        backgroundColor: color,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
-      )
+        ),
+      ),
     );
   }
 }
