@@ -37,12 +37,10 @@ import 'package:tracing_app_new/feature/auth/cubit/call_cubitt/incoming_call_ove
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-// ✅ تعديل دالة الخلفية لتكون "قوية" وتعمل بشكل مستقل
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // تهيئة Firebase ضرورية جداً داخل هذه الدالة لأنها تعمل في Process منفصل
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  
+
   // تهيئة الإشعارات داخل الخلفية لضمان عمل الـ Channels
   await NotificationService.initialize();
 
@@ -60,7 +58,7 @@ void main() async {
 
   // 2. تهيئة خدمات الإشعارات
   await NotificationService.initialize();
-  
+
   // 3. تفعيل معالج الخلفية (يجب أن يكون قبل أي مستمع آخر)
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
@@ -84,14 +82,26 @@ void main() async {
       ],
       child: MultiBlocProvider(
         providers: [
-          BlocProvider<AuthCubit>(create: (context) => AuthCubit(context.read<AuthRepo>())),
+          BlocProvider<AuthCubit>(
+            create: (context) => AuthCubit(context.read<AuthRepo>()),
+          ),
           BlocProvider<ThemeCubit>(create: (context) => ThemeCubit()),
           BlocProvider<ChatCubit>(create: (context) => ChatCubit()),
-          BlocProvider<ChildrenCubit>(create: (context) => ChildrenCubit(context.read<AuthRepo>())),
-          BlocProvider<LocationCubit>(create: (context) => LocationCubit(context.read<AuthRepo>())),
-          BlocProvider<ParentCubit>(create: (context) => ParentCubit(context.read<AuthRepo>())),
-          BlocProvider<ChildTrackingCubit>(create: (context) => ChildTrackingCubit(context.read<AuthRepo>())),
-          BlocProvider<CallCubit>(create: (context) => CallCubit(context.read<CallRepoImpl>())),
+          BlocProvider<ChildrenCubit>(
+            create: (context) => ChildrenCubit(context.read<AuthRepo>()),
+          ),
+          BlocProvider<LocationCubit>(
+            create: (context) => LocationCubit(context.read<AuthRepo>()),
+          ),
+          BlocProvider<ParentCubit>(
+            create: (context) => ParentCubit(context.read<AuthRepo>()),
+          ),
+          BlocProvider<ChildTrackingCubit>(
+            create: (context) => ChildTrackingCubit(context.read<AuthRepo>()),
+          ),
+          BlocProvider<CallCubit>(
+            create: (context) => CallCubit(context.read<CallRepoImpl>()),
+          ),
         ],
         child: const MyApp(),
       ),
@@ -125,17 +135,16 @@ class MyApp extends StatelessWidget {
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.darkTheme,
               themeMode: themeState.themeMode,
-              home: const AuthWrapper(),
+              home: SplashScreen(),
               onGenerateRoute: (settings) {
                 if (settings.name == '/callScreen') {
                   final args = settings.arguments as Map<String, dynamic>;
                   return MaterialPageRoute(
                     builder: (context) => IncomingCallOverlay(
                       callerName: args['callerName'] ?? 'متصل مجهول',
-                      roomName: args['roomName'], // نستخدم roomName ليتوافق مع الـ Cubit
+                      roomName: args['roomName'],
                       isVideo: true,
                       onAccept: () {
-                        // استخدام الـ roomName من الـ arguments
                         context.read<CallCubit>().joinIncomingCall(
                           roomName: args['roomName'],
                           userName: "مستخدم",
@@ -166,12 +175,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   void _saveDeviceToken(String userId) async {
     try {
-      NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-      
+      NotificationSettings settings = await FirebaseMessaging.instance
+          .requestPermission(alert: true, badge: true, sound: true);
+
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
         String? token = await FirebaseMessaging.instance.getToken();
         if (token != null) {

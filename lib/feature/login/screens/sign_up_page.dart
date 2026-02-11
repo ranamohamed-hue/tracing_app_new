@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart'; // ✅ استيراد المكتبة
+import 'package:flutter_screenutil/flutter_screenutil.dart'; 
 import 'package:tracing_app_new/core/theming/app_styles.dart';
 import 'package:tracing_app_new/core/widgets/appbar_part.dart';
 import 'package:tracing_app_new/feature/auth/cubit/auth_cubit.dart';
@@ -74,7 +74,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
                   TextFormFieldWidget(
                     title: "البريد الإلكتروني",
-                    hinttext: "أدخل البريد الإلكتروني",
+                    hinttext: "(Yahoo,Gmail ,...)أدخل بريدك الإلكتروني",
                     keyboardtype: TextInputType.emailAddress,
                     controller: _useremail,
                     icon: Icons.email_outlined,
@@ -82,10 +82,9 @@ class _SignUpPageState extends State<SignUpPage> {
                       if (value == null || value.isEmpty) {
                         return "من فضلك أدخل البريد الإلكتروني";
                       }
-                      if (!RegExp(
-                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                      ).hasMatch(value)) {
-                        return "البريد الإلكتروني غير صالح";
+                      final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+                      if (!emailRegex.hasMatch(value)) {
+                        return "الرجاء إدخال بريد إلكتروني صحيح (مثل: user@yahoo.com)";
                       }
                       return null;
                     },
@@ -224,9 +223,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       Navigator.of(context).pop();
                     },
                   ),
-                  SizedBox(
-                    height:40.h
-                  ),
+                  SizedBox(height: 40.h),
                 ],
               ),
             ),

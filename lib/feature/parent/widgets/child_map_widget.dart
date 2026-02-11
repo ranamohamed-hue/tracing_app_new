@@ -19,7 +19,6 @@ class ChildMapWidget extends StatefulWidget {
   State<ChildMapWidget> createState() => _ChildMapWidgetState();
 }
 
-// ... الاستيرادات كما هي
 
 class _ChildMapWidgetState extends State<ChildMapWidget> {
   final MapController _mapController = MapController();
@@ -42,12 +41,10 @@ class _ChildMapWidgetState extends State<ChildMapWidget> {
         if (state is ChildLocationUpdatedState) {
           final childLocation = state.location;
 
-          // 1. فحص جودة الإحداثيات
           bool isLocationValid =
               childLocation.latitude != 0 && childLocation.longitude != 0;
 
-          // 2. فحص المسافة (صمام الأمان لمصر)
-          // إذا كانت الإحداثيات خارج حدود مصر (مثلاً واشنطن 38)، نعتبرها "بعيدة"
+       
           final bool isWayOff =
               childLocation.latitude > 35 || childLocation.latitude < 22;
 
@@ -55,13 +52,10 @@ class _ChildMapWidgetState extends State<ChildMapWidget> {
             return const Center(child: Text("بانتظار إشارة GPS دقيقة..."));
           }
 
-          // 3. تحريك الكاميرا (هنا يتم استخدام المنطق الجديد)
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (isWayOff) {
-              // إذا كانت الإحداثيات القادمة من فيربيز خاطئة أو بعيدة جداً، ابقَ في مصر
               _mapController.move(egyptFallback, 12.0);
             } else {
-              // إذا كانت الإحداثيات في مصر (كما فعلتِ في فيربيز)، اذهب إليها
               _mapController.move(childLocation, 16.0);
             }
           });
@@ -69,7 +63,6 @@ class _ChildMapWidgetState extends State<ChildMapWidget> {
           return FlutterMap(
             mapController: _mapController,
             options: MapOptions(
-              // البدء بموقع مصر الافتراضي إذا كان الموقع القادم من فيربيز غير منطقي
               initialCenter: isWayOff ? egyptFallback : childLocation,
               initialZoom: isWayOff ? 12.0 : 16.0,
               interactionOptions: const InteractionOptions(

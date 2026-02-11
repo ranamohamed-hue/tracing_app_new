@@ -8,16 +8,16 @@ class ChatCubit extends Cubit<ChatState> {
 
   Future<void> launchChatGpt() async {
     final url = Uri.parse('https://chat.openai.com');
-    emit(ChatLoading()); // 1. حالة التحميل
+    emit(ChatLoading()); 
 
     try {
       if (await launchUrl(url)) {
-        emit(ChatSuccess()); // 2. حالة النجاح
+        emit(ChatSuccess());
       } else {
-        emit(const ChatError('لا يمكن فتح الرابط')); // 2. حالة الخطأ
+        emit(const ChatError('لا يمكن فتح الرابط')); 
       }
     } catch (e) {
-      emit(ChatError('حدث خطأ غير متوقع: ${e.toString()}')); // 2. حالة الخطأ
+      emit(ChatError('حدث خطأ غير متوقع: ${e.toString()}')); 
     }
   }
 }

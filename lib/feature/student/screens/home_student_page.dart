@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tracing_app_new/core/widgets/appbar_part.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart'; // ✅ استيراد المكتبة
+import 'package:flutter_screenutil/flutter_screenutil.dart'; 
 import 'package:tracing_app_new/core/theming/app_styles.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tracing_app_new/feature/auth/cubit/auth_cubit.dart';
@@ -96,14 +96,15 @@ class _HomeStudentPageState extends State<HomeStudentPage> {
           constraints: const BoxConstraints.expand(),
           decoration: AppStyles.primaryGradientDecoration,
           child: Padding(
-            padding: EdgeInsets.all(16.r), // ✅ بادينج مرن للشاشة
+            padding: EdgeInsets.all(16.r), 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(height: 10.h),
                 _buildWelcomeHeader(),
-                SizedBox(height: 30.h), // ✅ تجاوب المسافة
+                SizedBox(height: 30.h), 
                 // 1. زر تتبع الموقع
+
                 _buildLocationButton(),
                 SizedBox(height: 30.h),
 
@@ -219,7 +220,7 @@ class _HomeStudentPageState extends State<HomeStudentPage> {
                 icon: Icons.video_call,
               ),
             ),
-            SizedBox(width: 10.w), // ✅ تجاوب العرض
+            SizedBox(width: 10.w), 
             Expanded(
               child: ElevatedButtonWidget(
                 onpress: isConnecting ? null : () => _startCall(isVideo: false),

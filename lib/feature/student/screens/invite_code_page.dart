@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart'; // ✅ إضافة المكتبة
+import 'package:flutter_screenutil/flutter_screenutil.dart'; 
 import 'package:tracing_app_new/core/theming/app_styles.dart';
 import 'package:tracing_app_new/core/widgets/appbar_part.dart';
 import 'package:tracing_app_new/feature/auth/cubit/parent_cubit.dart';
@@ -46,7 +46,7 @@ class _InviteCodePageState extends State<InviteCodePage> {
         child: Container(
           decoration: AppStyles.primaryGradientDecoration,
           child: Padding(
-            padding: EdgeInsets.all(24.r), // ✅ بادينج مرن
+            padding: EdgeInsets.all(24.r), 
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -141,9 +141,9 @@ class _InviteCodePageState extends State<InviteCodePage> {
             child: Text(
               code,
               style: TextStyle(
-                fontSize: 34.sp, // ✅ حجم كود كبير وواضح
+                fontSize: 34.sp, 
                 fontWeight: FontWeight.bold,
-                letterSpacing: 6.0.w, // ✅ توزيع الأحرف
+                letterSpacing: 6.0.w, 
                 color: Colors.black87,
               ),
               textAlign: TextAlign.center,

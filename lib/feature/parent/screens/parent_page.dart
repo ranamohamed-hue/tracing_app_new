@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart'; // ✅ استيراد المكتبة
+import 'package:flutter_screenutil/flutter_screenutil.dart'; 
 import 'package:tracing_app_new/core/theming/app_styles.dart';
 import 'package:tracing_app_new/feature/parent/screens/home_page.dart';
 import 'package:tracing_app_new/feature/parent/screens/children_page.dart';
@@ -59,20 +59,19 @@ class _ParentPageState extends State<ParentPage> {
         ),
       ),
       bottomNavigationBar: Container(
-        // استخدام اللون الخلفي لضمان عدم وجود فراغ تحت المنحنى
         color: const Color.fromARGB(255, 178, 198, 211), 
         child: Container(
-          height: 75.h, // ✅ تحديد ارتفاع ثابت ومرن لشريط التنقل
+          height: 75.h, 
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(30.r), // ✅ زوايا مرنة
+              topLeft: Radius.circular(30.r), 
               topRight: Radius.circular(30.r),
             ),
             boxShadow: [
               BoxShadow(
                 blurRadius: 10.r, 
-                offset: Offset(0, -2.h), // ظل خفيف للأعلى
+                offset: Offset(0, -2.h), 
                 color: Colors.black12,
               ),
             ],
@@ -101,7 +100,7 @@ class _ParentPageState extends State<ParentPage> {
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
         decoration: BoxDecoration(
           color: isSelected
-              ? Colors.blue.withOpacity(0.1) // خلفية خفيفة عند الاختيار
+              ? Colors.blue.withOpacity(0.1) 
               : Colors.transparent,
           borderRadius: BorderRadius.circular(20.r),
         ),
@@ -111,9 +110,9 @@ class _ParentPageState extends State<ParentPage> {
             Icon(
               icon,
               color: isSelected ? Colors.blue : Colors.grey,
-              size: 26.r, // ✅ حجم أيقونة مرن
+              size: 26.r, 
             ),
-            if (isSelected) // إظهار النص فقط عند الاختيار (اختياري - يعطي طابع عصري)
+            if (isSelected) 
               Text(
                 label,
                 style: TextStyle(

@@ -9,7 +9,6 @@ class ForgotPasswordPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // استخدمنا GlobalKey للـ Form عشان نقدر نشغل الـ Validator
     final _formKey = GlobalKey<FormState>();
     final TextEditingController _emailController = TextEditingController();
 
@@ -22,7 +21,7 @@ class ForgotPasswordPage extends StatelessWidget {
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: Form(
-            key: _formKey, // ربط الـ Form بالـ Key
+            key: _formKey, 
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -32,11 +31,10 @@ class ForgotPasswordPage extends StatelessWidget {
                   style: TextStyle(color: Colors.white, fontSize: 16.sp),
                 ),
                 SizedBox(height: 30.h),
-                
-                // ✅ تعديل البيانات لتناسب البريد الإلكتروني
+
                 TextFormFieldWidget(
-                  title: "البريد الإلكتروني", 
-                  hinttext: "أدخل بريدك الإلكتروني",
+                  title: "البريد الإلكتروني",
+                  hinttext: "(Yahoo,Gmail ,...)أدخل بريدك الإلكتروني",
                   keyboardtype: TextInputType.emailAddress,
                   controller: _emailController,
                   icon: Icons.email_outlined,
@@ -44,21 +42,22 @@ class ForgotPasswordPage extends StatelessWidget {
                     if (value == null || value.isEmpty) {
                       return "من فضلك أدخل البريد الإلكتروني";
                     }
-                    if (!RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                    ).hasMatch(value)) {
-                      return "الرجاء إدخال بريد إلكتروني صحيح";
+                    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+                    if (!emailRegex.hasMatch(value)) {
+                      return "الرجاء إدخال بريد إلكتروني صحيح (مثل: user@yahoo.com)";
                     }
                     return null;
                   },
                 ),
-                
+
                 SizedBox(height: 30.h),
-                
+
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     minimumSize: Size(200.w, 50.h),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
                   ),
                   onPressed: () {
                     // التحقق من صحة الإدخال قبل الإرسال
@@ -72,7 +71,10 @@ class ForgotPasswordPage extends StatelessWidget {
                       );
                     }
                   },
-                  child: Text("إرسال الرابط", style: TextStyle(fontSize: 16.sp)),
+                  child: Text(
+                    "إرسال الرابط",
+                    style: TextStyle(fontSize: 16.sp),
+                  ),
                 ),
               ],
             ),

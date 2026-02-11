@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart'; // ✅ استيراد المكتبة
+import 'package:flutter_screenutil/flutter_screenutil.dart'; 
 import 'package:tracing_app_new/core/theming/app_styles.dart';
 import 'package:tracing_app_new/core/widgets/appbar_part.dart';
 import 'package:tracing_app_new/feature/auth/cubit/auth_cubit.dart';
@@ -16,26 +16,25 @@ import 'package:tracing_app_new/feature/parent/widgets/link_child_dialog.dart';
 class ChildrenPage extends StatelessWidget {
   const ChildrenPage({super.key});
 
-  // ✅ تعديل بطاقة الطفل لتكون مرنة
   Widget _buildChildCard(BuildContext context, UserModel child) {
     return Card(
-      margin: EdgeInsets.symmetric(vertical: 8.0.h), // ✅ مسافة مرنة
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)), // ✅ زوايا مرنة
+      margin: EdgeInsets.symmetric(vertical: 8.0.h), 
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)), 
       elevation: 3,
       child: ListTile(
-        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h), // ✅ بادينج داخلي مرن
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h), 
         leading: CircleAvatar(
-          radius: 25.r, // ✅ حجم الافاتار مرن
+          radius: 25.r, 
           backgroundColor: Colors.blue,
           child: Icon(Icons.person, color: Colors.white, size: 28.r),
         ),
         title: Text(
           child.username,
-          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold), // ✅ نص مرن
+          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold), 
         ),
         subtitle: Text(
           'البريد: ${child.email}',
-          style: TextStyle(fontSize: 13.sp), // ✅ نص مرن
+          style: TextStyle(fontSize: 13.sp), 
         ),
         trailing: Icon(Icons.arrow_forward_ios, size: 18.r, color: Colors.grey),
         onTap: () {
@@ -74,7 +73,7 @@ class ChildrenPage extends StatelessWidget {
           constraints: const BoxConstraints.expand(),
           decoration: AppStyles.primaryGradientDecoration,
           child: Padding(
-            padding: EdgeInsets.all(16.0.r), // ✅ بادينج الشاشة مرن
+            padding: EdgeInsets.all(16.0.r), 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -87,14 +86,14 @@ class ChildrenPage extends StatelessWidget {
                     return Text(
                       "مرحباً : $parentName",
                       style: TextStyle(
-                        fontSize: 22.sp, // ✅ نص ترحيبي مرن
+                        fontSize: 22.sp, 
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     );
                   },
                 ),
-                SizedBox(height: 20.h), // ✅ مسافة مرنة
+                SizedBox(height: 20.h), 
                 Text(
                   "الأبناء المرتبطون بحسابك:",
                   style: TextStyle(fontSize: 16.sp, color: Colors.white70),
@@ -158,7 +157,7 @@ class ChildrenPage extends StatelessWidget {
           );
         },
         backgroundColor: Colors.white,
-        child: Icon(Icons.add, color: Colors.blue, size: 30.r), // ✅ حجم الأيقونة مرن
+        child: Icon(Icons.add, color: Colors.blue, size: 30.r), 
       ),
     );
   }

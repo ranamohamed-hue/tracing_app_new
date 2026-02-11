@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart'; // ✅ استيراد المكتبة
+import 'package:flutter_screenutil/flutter_screenutil.dart'; 
 import 'package:intl/intl.dart'; 
 import 'package:tracing_app_new/core/theming/app_styles.dart';
 
@@ -25,13 +25,13 @@ class _NotificationPageState extends State<NotificationPage> {
           style: TextStyle(
             color: Colors.white, 
             fontWeight: FontWeight.bold,
-            fontSize: 20.sp, // ✅ حجم خط العنوان مرن
+            fontSize: 20.sp,
           )
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        iconTheme: IconThemeData(color: Colors.white, size: 24.r), // ✅ حجم الأيقونة مرن
+        iconTheme: IconThemeData(color: Colors.white, size: 24.r), 
       ),
       body: Container(
         constraints: const BoxConstraints.expand(),
@@ -54,7 +54,6 @@ class _NotificationPageState extends State<NotificationPage> {
             final notifications = snapshot.data!.docs;
 
             return ListView.builder(
-              // ✅ تعديل الـ padding ليكون متوافقاً مع أحجام الشاشات المختلفة
               padding: EdgeInsets.only(
                 top: 100.h, 
                 left: 15.w, 
@@ -79,11 +78,11 @@ class _NotificationPageState extends State<NotificationPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.notifications_none_outlined, size: 80.r, color: Colors.white54), // ✅ حجم مرن
+          Icon(Icons.notifications_none_outlined, size: 80.r, color: Colors.white54), 
           SizedBox(height: 15.h),
           Text(
             "صندوق التنبيهات فارغ حالياً",
-            style: TextStyle(color: Colors.white70, fontSize: 18.sp), // ✅ نص مرن
+            style: TextStyle(color: Colors.white70, fontSize: 18.sp),
           ),
         ],
       ),
@@ -114,7 +113,7 @@ class _NotificationPageState extends State<NotificationPage> {
         margin: EdgeInsets.only(bottom: 12.h),
         decoration: BoxDecoration(
           color: Colors.redAccent.withOpacity(0.7),
-          borderRadius: BorderRadius.circular(15.r), // ✅ راديوس مرن
+          borderRadius: BorderRadius.circular(15.r), 
         ),
         alignment: Alignment.centerRight,
         padding: EdgeInsets.only(right: 25.w),
@@ -124,16 +123,16 @@ class _NotificationPageState extends State<NotificationPage> {
         color: Colors.white.withOpacity(0.12),
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.r)),
-        margin: EdgeInsets.only(bottom: 12.h), // ✅ مسافة بين الكروت مرنة
+        margin: EdgeInsets.only(bottom: 12.h), 
         child: ListTile(
           contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
           leading: CircleAvatar(
-            radius: 25.r, // ✅ حجم دائرة الأيقونة مرن
+            radius: 25.r, 
             backgroundColor: _getIconColor(data['type']).withOpacity(0.2),
             child: Icon(
               _getIcon(data['type']), 
               color: _getIconColor(data['type']), 
-              size: 26.r // ✅ حجم الأيقونة مرن
+              size: 26.r 
             ),
           ),
           title: Text(
@@ -141,19 +140,19 @@ class _NotificationPageState extends State<NotificationPage> {
             style: TextStyle(
               color: Colors.white, 
               fontWeight: FontWeight.bold, 
-              fontSize: 15.sp // ✅ عنوان الإشعار مرن
+              fontSize: 15.sp 
             ),
           ),
           subtitle: Padding(
             padding: EdgeInsets.only(top: 4.h),
             child: Text(
               data['body'] ?? "",
-              style: TextStyle(color: Colors.white70, fontSize: 13.sp), // ✅ محتوى الإشعار مرن
+              style: TextStyle(color: Colors.white70, fontSize: 13.sp), 
             ),
           ),
           trailing: Text(
             time,
-            style: TextStyle(color: Colors.white38, fontSize: 10.sp), // ✅ وقت الإشعار مرن
+            style: TextStyle(color: Colors.white38, fontSize: 10.sp), 
           ),
         ),
       ),

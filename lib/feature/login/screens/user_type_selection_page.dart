@@ -108,7 +108,6 @@ class _UserTypeSelectionPageState extends State<UserTypeSelectionPage> {
     );
   }
 
-  // 7.   بطاقة الاختيار
   Widget _buildSelectionCard({
     required IconData icon,
     required String label,

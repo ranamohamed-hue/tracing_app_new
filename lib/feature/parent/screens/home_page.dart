@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart'; // ✅ استيراد المكتبة
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tracing_app_new/core/theming/app_styles.dart';
 import 'package:tracing_app_new/core/widgets/appbar_part.dart';
 import 'package:tracing_app_new/core/widgets/elevated_button_widget.dart';
@@ -44,7 +44,7 @@ class _HomePageState extends State<HomePage> {
           constraints: const BoxConstraints.expand(),
           decoration: AppStyles.primaryGradientDecoration,
           child: Padding(
-            padding: EdgeInsets.all(16.r), // ✅ بادينج مرن للشاشة
+            padding: EdgeInsets.all(16.r), 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -60,13 +60,13 @@ class _HomePageState extends State<HomePage> {
                       "مرحباً : $parentName",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 20.sp, // ✅ نص ترحيبي أكبر ومرن
+                        fontSize: 20.sp, 
                         color: Colors.white,
                       ),
                     );
                   },
                 ),
-                SizedBox(height: 25.h), // ✅ مسافات رأسية مرنة
+                SizedBox(height: 25.h), 
                 Expanded(
                   child: BlocBuilder<ChildrenCubit, ChildrenState>(
                     builder: (context, childrenState) {
@@ -128,10 +128,10 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildChildrenDropdown(List<UserModel> children) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w), // ✅ بادينج داخلي مرن
+      padding: EdgeInsets.symmetric(horizontal: 16.w), 
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r), // ✅ زوايا مرنة
+        borderRadius: BorderRadius.circular(12.r), 
         boxShadow: [
           BoxShadow(
             color: Colors.black12,
@@ -144,12 +144,12 @@ class _HomePageState extends State<HomePage> {
         child: DropdownButton<UserModel>(
           value: selectedChild,
           isExpanded: true,
-          iconSize: 30.r, // ✅ حجم الأيقونة مرن
+          iconSize: 30.r, 
           hint: Text("اختر طفلاً", style: TextStyle(fontSize: 16.sp)),
           items: children.map((child) {
             return DropdownMenuItem<UserModel>(
               value: child,
-              child: Text(child.username, style: TextStyle(fontSize: 16.sp)), // ✅ نص العناصر مرن
+              child: Text(child.username, style: TextStyle(fontSize: 16.sp)), 
             );
           }).toList(),
           onChanged: (UserModel? newChild) {
@@ -176,7 +176,7 @@ class _HomePageState extends State<HomePage> {
                 icon: Icons.video_call_outlined,
               ),
             ),
-            SizedBox(width: 12.w), // ✅ مسافة أفقية مرنة
+            SizedBox(width: 12.w), 
             Expanded(
               child: ElevatedButtonWidget(
                 onpress: isConnecting ? null : () => _startCall(isVideo: false),

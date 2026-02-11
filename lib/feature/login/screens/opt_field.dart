@@ -21,7 +21,6 @@ class _OptFieldState extends State<OptField> {
   @override
   void initState() {
     super.initState();
-    // نستمع للتغيير في حالة التركيز
     widget.focusNode.addListener(() {
       setState(() {
         isFocused = widget.focusNode.hasFocus;

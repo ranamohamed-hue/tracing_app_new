@@ -1,4 +1,3 @@
-// lib/feature/student/screens/student_page.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -33,7 +32,7 @@ class _StudentPageState extends State<StudentPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // لإبقاء الخلفية ثابتة خلف الصفحات
+      
       body: Container(
         constraints: const BoxConstraints.expand(),
         decoration: AppStyles.primaryGradientDecoration,
@@ -50,7 +49,7 @@ class _StudentPageState extends State<StudentPage> {
         178,
         198,
         211,
-      ), // لون الخلفية خلف الانحناء
+      ),
       child: Container(
         height: 75.h,
         decoration: BoxDecoration(

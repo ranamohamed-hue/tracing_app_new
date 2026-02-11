@@ -1,34 +1,54 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart'; // ✅ إضافة المكتبة
-import 'package:tracing_app_new/feature/login/screens/sign_in_page.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+// تأكدي من استيراد الـ AuthWrapper أو الصفحة التالية بشكل صحيح
+import 'package:tracing_app_new/main.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => SplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class SplashScreenState extends State<SplashScreen> {
-  late VideoPlayerController _logo;
+class _SplashScreenState extends State<SplashScreen> {
+  late VideoPlayerController _videoController;
+  bool _videoEnded = false;
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
 
-    _logo = VideoPlayerController.asset('assets/videosplash.mp4')
+    // تهيئة الفيديو مع معالجة مشكلة اللون الأسود
+    _videoController = VideoPlayerController.asset('assets/introsplash.mp4')
       ..initialize().then((_) {
-        _logo.play();
-        _logo.setLooping(false);
-        setState(() {});
+        if (mounted) {
+          setState(() {
+            _isInitialized = true;
+          });
+          _videoController.play();
+          _videoController.setLooping(false);
+        }
 
-        _handleAppStartupLogics();
+        // Listener للانتقال بعد انتهاء الفيديو
+        _videoController.addListener(() {
+          final bool isFinished =
+              _videoController.value.position >=
+              _videoController.value.duration;
+          if (isFinished && !_videoEnded) {
+            _videoEnded = true;
+            _handleAppStartupLogics();
+          }
+        });
       });
   }
 
+  // منطق بدء التطبيق بعد انتهاء الفيديو
   Future<void> _handleAppStartupLogics() async {
+    // 1. طلب الصلاحيات الأساسية
     await [
       Permission.camera,
       Permission.microphone,
@@ -36,44 +56,45 @@ class SplashScreenState extends State<SplashScreen> {
       Permission.locationWhenInUse,
     ].request();
 
+    // 2. صلاحية الظهور فوق التطبيقات (Overlay) - مهمة جداً للـ CallCubit
     if (await Permission.systemAlertWindow.isDenied) {
-      if (mounted) {
-        await _showOverlayPermissionDialog();
-      }
+      await _showOverlayPermissionDialog();
     }
 
-    // الانتظار حتى انتهاء الفيديو
-    await Future.delayed(_logo.value.duration);
-    
     _navigateToSignIn();
   }
 
   Future<void> _showOverlayPermissionDialog() async {
+    bool permissionGranted = false;
+    Timer(const Duration(seconds: 5), () {
+      if (!permissionGranted && mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+    });
+
     return showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15.r), // ✅ زوايا مرنة للديالوج
+          borderRadius: BorderRadius.circular(15.r),
         ),
         title: Text(
           "صلاحية هامة",
-          style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold), // ✅ نص مرن
+          style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold),
         ),
         content: Text(
-          "لتتمكن من استقبال المكالمات حتى لو الموبايل مقفول، يرجى تفعيل 'الظهور فوق التطبيقات' في الصفحة التالية.",
-          style: TextStyle(fontSize: 16.sp), // ✅ نص مرن
+          "لتتمكن من استقبال المكالمات بشكل صحيح، يرجى تفعيل 'الظهور فوق التطبيقات'.",
+          style: TextStyle(fontSize: 16.sp),
         ),
         actions: [
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h), // ✅ بادينج مرن للزر
-            ),
             onPressed: () async {
+              permissionGranted = true;
               Navigator.pop(context);
               await openAppSettings();
             },
-            child: Text("تفعيل الآن", style: TextStyle(fontSize: 14.sp)),
+            child: const Text("تفعيل الآن"),
           ),
         ],
       ),
@@ -85,7 +106,8 @@ class SplashScreenState extends State<SplashScreen> {
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const SignInPage(),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const AuthWrapper(),
         transitionDuration: const Duration(seconds: 1),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
@@ -96,34 +118,41 @@ class SplashScreenState extends State<SplashScreen> {
 
   @override
   void dispose() {
-    _logo.dispose();
+    _videoController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _logo.value.isInitialized
-          ? SizedBox.expand(
-              child: FittedBox(
-                fit: BoxFit.cover,
-                child: SizedBox(
-                  width: _logo.value.size.width,
-                  height: _logo.value.size.height,
-                  child: VideoPlayer(_logo),
-                ),
-              ),
-            )
-          : Container(
-              color: const Color.fromARGB(255, 32, 23, 163),
-              child: Center(
-                child: SizedBox(
-                  width: 50.r, // ✅ حجم ثابت متناسق لللودينج
-                  height: 50.r,
-                  child: const CircularProgressIndicator(color: Colors.white),
-                ),
-              ),
+      backgroundColor: Colors.white, // يطابق الـ XML بتاعك
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // الطبقة الأولى: الخلفية واللوجو (نفس شكل الـ Native Splash تماماً)
+          Positioned.fill(
+            child: Image.asset(
+              'assets/logoo.png',
+              fit: BoxFit.cover, // يملأ الشاشة مع الحفاظ على الأبعاد
             ),
+          ),
+          // الطبقة الثانية: الفيديو بيظهر بـ Fade ناعم فوق اللوجو
+          AnimatedOpacity(
+            opacity: _isInitialized ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 400),
+            child: _isInitialized
+                ? FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _videoController.value.size.width,
+                      height: _videoController.value.size.height,
+                      child: VideoPlayer(_videoController),
+                    ),
+                  )
+                : const SizedBox.expand(),
+          ),
+        ],
+      ),
     );
   }
 }

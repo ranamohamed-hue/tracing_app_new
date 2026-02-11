@@ -10,10 +10,7 @@ class LinkChildDialog extends StatefulWidget {
 }
 
 class _LinkChildDialogState extends State<LinkChildDialog> {
-  // 1. قم بتعريف الـ Controller هنا كمتغير في الـ State
   final TextEditingController codeController = TextEditingController();
-
-  // 2. قم بتنظيف الـ Controller عند إغلاق الـ Dialog لتجنب تسرب الذاكرة
   @override
   void dispose() {
     codeController.dispose();
@@ -22,11 +19,10 @@ class _LinkChildDialogState extends State<LinkChildDialog> {
 
   @override
   Widget build(BuildContext context) {
-    // لا تنشئ الـ Controller هنا مرة أخرى
     return AlertDialog(
       title: const Text('ربط طفل جديد'),
       content: TextField(
-        controller: codeController, // استخدم الـ Controller الذي عرفته أعلاه
+        controller: codeController, 
         decoration: const InputDecoration(
           hintText: 'أدخل كود الدعوة',
           border: OutlineInputBorder(),
