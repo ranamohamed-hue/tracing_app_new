@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tracing_app_new/feature/auth/data/repo/auth_repo.dart';
-// *** استيراد ملف الحالات المخصص لولي الأمر ***
 import 'package:tracing_app_new/feature/auth/cubit/parent_state.dart';
 
 class ParentCubit extends Cubit<ParentState> {

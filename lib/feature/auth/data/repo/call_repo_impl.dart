@@ -24,7 +24,6 @@ class CallRepoImpl implements CallRepo {
     required JitsiMeetConferenceOptions options,
   }) async {
     try {
-      // حسب الـ Documentation: دالة join تاخد الخيارات ثم الـ listener اختياري
       await _jitsiMeet.join(
         options,
         JitsiMeetEventListener(
@@ -59,7 +58,7 @@ class CallRepoImpl implements CallRepo {
   @override
   Future<Either<String, void>> leaveMeeting() async {
     try {
-      await _jitsiMeet.hangUp(); // الدالة الصحيحة حسب التوثيق
+      await _jitsiMeet.hangUp(); 
       return const Right(null);
     } catch (e) {
       return Left(e.toString());

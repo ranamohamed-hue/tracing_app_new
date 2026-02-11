@@ -7,7 +7,7 @@ class UserModel extends Equatable {
   final String email;
   final String userType;
   final String inviteCode;
-  final String? parentUid; // *** NEW: أضفنا حقل parentUid، يمكن أن يكون null
+  final String? parentUid; 
 
   const UserModel({
     required this.uid,
@@ -15,7 +15,7 @@ class UserModel extends Equatable {
     required this.email,
     required this.userType,
     this.inviteCode = '',
-    this.parentUid, // *** NEW
+    this.parentUid, 
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -26,7 +26,7 @@ class UserModel extends Equatable {
       email: data['email'] ?? '',
       userType: data['userType'] ?? 'طالب',
       inviteCode: data['inviteCode'] ?? '',
-      parentUid: data['parentUid'], // *** NEW: اقرأ الحقل من Firestore
+      parentUid: data['parentUid'], 
     );
   }
 
@@ -36,7 +36,7 @@ class UserModel extends Equatable {
       'email': email,
       'userType': userType,
       'inviteCode': inviteCode,
-      'parentUid': parentUid, // *** NEW: أضف الحقل عند الحفظ
+      'parentUid': parentUid, 
     };
   }
 
@@ -44,7 +44,7 @@ class UserModel extends Equatable {
     String? username,
     String? userType,
     String? inviteCode,
-    String? parentUid, // *** NEW: أضفه لـ copyWith
+    String? parentUid, 
   }) {
     return UserModel(
       uid: uid,
@@ -52,14 +52,14 @@ class UserModel extends Equatable {
       email: email,
       userType: userType ?? this.userType,
       inviteCode: inviteCode ?? this.inviteCode,
-      parentUid: parentUid ?? this.parentUid, // *** NEW
+      parentUid: parentUid ?? this.parentUid, 
     );
   }
 
   @override
   String toString() =>
-      'UserModel(uid: $uid, username: $username, userType: $userType, inviteCode: $inviteCode, parentUid: $parentUid)'; // *** NEW
+      'UserModel(uid: $uid, username: $username, userType: $userType, inviteCode: $inviteCode, parentUid: $parentUid)'; 
 
   @override
-  List<Object?> get props => [uid, username, email, userType, inviteCode, parentUid]; // *** NEW: أضف parentUid
+  List<Object?> get props => [uid, username, email, userType, inviteCode, parentUid]; 
 }

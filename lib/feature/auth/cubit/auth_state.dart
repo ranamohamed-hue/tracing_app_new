@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:tracing_app_new/feature/auth/data/models/user_model.dart';
 
-// --- الحالات الأساسية للمصادقة ---
 abstract class AuthState extends Equatable {
   const AuthState();
   

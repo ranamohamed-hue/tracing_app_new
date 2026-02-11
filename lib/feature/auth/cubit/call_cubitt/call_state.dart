@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-// 1. تعريف الـ Enum بكل الحالات المطلوبة
 enum MeetingStatus { 
   idle,       // الحالة الابتدائية
   connecting, // جاري الاتصال

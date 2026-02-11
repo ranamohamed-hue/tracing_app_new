@@ -7,22 +7,19 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:jitsi_meet_flutter_sdk/jitsi_meet_flutter_sdk.dart';
 import 'package:tracing_app_new/feature/auth/data/models/user_model.dart';
 import 'package:tracing_app_new/feature/auth/cubit/call_cubitt/call_state.dart';
-import 'package:tracing_app_new/feature/auth/data/repo/call_repo_impl.dart'; // تأكدي من صحة المسار
+import 'package:tracing_app_new/feature/auth/data/repo/call_repo_impl.dart'; 
 
 class CallCubit extends Cubit<CallState> {
   final AudioPlayer _audioPlayer = AudioPlayer();
-  final CallRepoImpl _callRepo; // تم الربط مع المستودع بنجاح
+  final CallRepoImpl _callRepo; 
 
   Timer? _callTimer;
   StreamSubscription<DocumentSnapshot>? _callStreamSubscription; 
 
-  // مفتاح FCM - يفضل لاحقاً نقله لملف إعدادات آمن
   final String _fcmServerKey = "YOUR_SERVER_KEY_HERE";
 
-  // المنشئ الوحيد والمطلوب
   CallCubit(this._callRepo) : super(const CallState());
 
-  // === 1. دالة بدء المكالمة ===
   Future<void> startMeeting({
     required UserModel currentUser, 
     required bool isVideoCall,
@@ -32,7 +29,6 @@ class CallCubit extends Cubit<CallState> {
 
     _playCallingTone();
 
-    // اسم الغرفة الموحد بناءً على معرف الطالب
     String roomName = "room_$calleeId";
 
     try {
@@ -69,7 +65,6 @@ class CallCubit extends Cubit<CallState> {
     }
   }
 
-  // === 2. دالة الانضمام لمكالمة واردة ===
   Future<void> joinIncomingCall({
     required String roomName,
     required String userName,
@@ -86,7 +81,6 @@ class CallCubit extends Cubit<CallState> {
     }
   }
 
-  // === دالة إعداد Jitsi ===
   Future<void> _joinJitsiRoom(String room, String name, String email, bool isVideo, String? calleeId) async {
     final options = JitsiMeetConferenceOptions(
       serverURL: "https://meet.ffmuc.net",

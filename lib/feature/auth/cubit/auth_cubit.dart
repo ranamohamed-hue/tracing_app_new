@@ -15,12 +15,10 @@ class AuthCubit extends Cubit<AuthState> {
     final currentUser = await _authRepo.getCurrentUser();
     currentUser.fold(
       (error) => emit(AuthInitialState()),
-      // *** التعديل الرئيسي: إضافة قائمة children فارغة ***
       (userModel) => emit(AuthenticatedState(userModel, children: [])),
     );
   }
 
-  // --- مصادقة المستخدم ---
   Future<void> signUp({required UserModel userModel, required String password}) async {
     emit(SignUpLoadingState());
     final result = await _authRepo.signUp(userModel: userModel, password: password);
@@ -35,7 +33,6 @@ class AuthCubit extends Cubit<AuthState> {
     final result = await _authRepo.login(email: email, password: password);
     result.fold(
       (error) => emit(LoginErrorState(error)),
-      // *** التعديل الرئيسي: إضافة قائمة children فارغة ***
       (userModel) => emit(AuthenticatedState(userModel, children: [])),
     );
   }

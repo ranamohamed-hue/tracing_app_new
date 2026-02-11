@@ -15,7 +15,6 @@ class AuthRepoImpl implements AuthRepo {
   }) : _firebaseAuth = firebaseAuth,
        _firebaseFirestore = firebaseFirestore;
 
-  // --- منطق المصادقة الأساسي (لم يتغير) ---
   @override
   Future<Either<String, String>> signUp({
     required UserModel userModel,
@@ -94,7 +93,6 @@ class AuthRepoImpl implements AuthRepo {
         'تم إرسال رابط استعادة كلمة المرور بنجاح! يرجى التحقق من بريدك الإلكتروني.',
       );
     } on FirebaseAuthException catch (e) {
-      // استخدمنا الدالة المساعدة اللي انتي عاملاها للمابينج
       return Left(_mapFirebaseErrorToMessage(e.code));
     } catch (e) {
       return Left('حدث خطأ غير متوقع: ${e.toString()}');
@@ -140,7 +138,6 @@ class AuthRepoImpl implements AuthRepo {
     }
   }
 
-  // --- منطق التتبع والموقع (لم يتغير) ---
   @override
   Future<Either<String, void>> updateUserLocation(
     String uid,
@@ -162,11 +159,9 @@ class AuthRepoImpl implements AuthRepo {
     }
   }
 
-  // --- منطق ربط ولي الأمر بالطالب (تم تعديله) ---
   @override
   Future<Either<String, String>> generateInviteCode(String studentUid) async {
     try {
-      // *** تحسين: للتأكد من أن الكود فريد (اختياري لكن مفيد) ***
       String code;
       bool codeExists;
       do {
@@ -195,11 +190,10 @@ class AuthRepoImpl implements AuthRepo {
     required String inviteCode,
   }) async {
     try {
-      // *** تحسين: ابحث عن الطالب خارج المعاملة للحصول على مرجع المستند (DocumentReference) ***
       final querySnapshot = await _firebaseFirestore
           .collection('users')
           .where('inviteCode', isEqualTo: inviteCode)
-          .where('parentUid', isNull: true) // *** مهم: تأكد من أن الطالب غير مربوط بعد ***
+          .where('parentUid', isNull: true) 
           .limit(1)
           .get();
 
@@ -211,23 +205,18 @@ class AuthRepoImpl implements AuthRepo {
       final childUid = childDocSnapshot.id;
       final childData = childDocSnapshot.data() as Map<String, dynamic>;
 
-      // أنشئ المراجع التي ستحتاجها داخل المعاملة
       final childDocRef = _firebaseFirestore.collection('users').doc(childUid);
       final parentChildrenRef = _firebaseFirestore.collection('users').doc(parentUid).collection('children').doc(childUid);
 
-      // *** تحسين: قم بتشغيل المعاملة باستخدام المراجع لضمان التنفيذ الذري ***
       await _firebaseFirestore.runTransaction((transaction) async {
-        // يمكنك إعادة جلب المستند داخل المعاملة للتأكد من أنه لم يتغير
         transaction.get(childDocRef);
 
-        // 1. أضف الطالب إلى مجموعة الأبناء لدى ولي الأمر
         transaction.set(parentChildrenRef, {
           'childName': childData['username'],
           'addedAt': FieldValue.serverTimestamp(),
           'status': 'active',
         });
 
-        // 2. *** مهم: حدث بيانات الطالب بإضافة parentUid وحذف الكود ***
         transaction.update(childDocRef, {
           'parentUid': parentUid,
           'inviteCode': FieldValue.delete(),
@@ -240,7 +229,6 @@ class AuthRepoImpl implements AuthRepo {
     }
   }
 
-  // --- منطق جلب الأبناء (لم يتغير، لكنه يعمل بشكل صحيح مع التعديلات الجديدة) ---
   @override
   Future<Either<String, List<UserModel>>> getParentChildren(String parentUid) async {
     try {
@@ -277,15 +265,12 @@ Stream<GeoPoint> getChildLocationStream(String childUid) {
       .snapshots()
       .map((snapshot) {
         if (snapshot.exists && snapshot.data() != null) {
-          // تأكد من اسم الحقل داخل الفايربيز
           return snapshot.data()!['location'] as GeoPoint;
         }
-        // إرجاع قيمة افتراضية لتجنب خطأ الـ Null check operator
         return const GeoPoint(0, 0); 
       });
 }
 
-  // --- دوال مساعدة (لم تتغير) ---
   String _generateRandomCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final random = Random.secure();
